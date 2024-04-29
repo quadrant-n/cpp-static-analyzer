@@ -9,7 +9,7 @@ def main(compileCommands: str):
 
 def checkFile(path: str, parser: argparse.ArgumentParser):
     if not fpath.isfile(path):
-        parser.error("File %s not found or invalid.", path)
+        parser.error('File {path} not found or invalid.')
     else:
         return path
 
