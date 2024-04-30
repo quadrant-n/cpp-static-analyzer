@@ -1,7 +1,7 @@
 from collections import defaultdict
 import yaml
 
-defaultConfig = {
+default_config = {
     'Checks': {
         'abseil': 0,
         'altera': 0,
@@ -39,21 +39,21 @@ def load(yaml_file_path):
             return config
     except FileNotFoundError:
         print('{yaml_file_path} not found.')
-        return defaultConfig
+        return default_config
     except yaml.YAMLError:
         print('{yaml_file_path} is invalid.')
-        return defaultConfig
+        return default_config
 
-def getPathConverter(config):
+def get_path_converter(config):
     if 'PathConverter' in config:
         return config['PathConverter']
     print('No path converter available.')
-    return defaultConfig['PathConverter']
+    return default_config['PathConverter']
 
-def getCheckFlags(config):
+def get_check_flags(config):
     if 'Checks' in config:
         checks = config['Checks']
-        defaultChecks = defaultConfig['Checks']
+        defaultChecks = default_config['Checks']
         result = {}
 
         for key, value in defaultChecks.items():
@@ -65,4 +65,4 @@ def getCheckFlags(config):
         return result
 
     print('No checks available.')
-    return defaultConfig['Checks']
+    return default_config['Checks']

@@ -28,7 +28,7 @@ def config_string():
 def test_path_converter(config_string):
     config = yaml.safe_load(config_string)
 
-    path_conv = cfg.getPathConverter(config)
+    path_conv = cfg.get_path_converter(config)
     assert len(path_conv) == 2, 'Wrong number of paths.'
 
     for key, value in path_conv.items():
@@ -40,7 +40,7 @@ def test_path_converter(config_string):
 def test_check_flags(config_string):
     config = yaml.safe_load(config_string)
 
-    checks = cfg.getCheckFlags(config)
+    checks = cfg.get_check_flags(config)
     assert len(checks) == 25, 'There must be 25 check flags.'
 
     org_flags = config['Checks']

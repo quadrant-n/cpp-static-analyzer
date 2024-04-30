@@ -1,0 +1,20 @@
+[
+  {
+    "directory": "/home/llama.cpp/build",
+    "command": "/developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/cc -DACCELERATE_LAPACK_ILP64 -DACCELERATE_NEW_LAPACK -DGGML_SCHED_MAX_COPIES=4 -DGGML_USE_ACCELERATE -DGGML_USE_LLAMAFILE -DGGML_USE_METAL -D_DARWIN_C_SOURCE -D_XOPEN_SOURCE=600 -I/home/llama.cpp/. -F/developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX14.4.sdk/System/Library/Frameworks -O3 -DNDEBUG -std=gnu11 -arch arm64 -isysroot /developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX14.4.sdk -Wshadow -Wstrict-prototypes -Wpointer-arith -Wmissing-prototypes -Werror=implicit-int -Werror=implicit-function-declaration -Wall -Wextra -Wpedantic -Wcast-qual -Wno-unused-function -Wunreachable-code-break -Wunreachable-code-return -Wdouble-promotion -o CMakeFiles/ggml.dir/ggml.c.o -c /home/llama.cpp/ggml.c",
+    "file": "/home/llama.cpp/ggml.c",
+    "output": "CMakeFiles/ggml.dir/ggml.c.o"
+  },
+  {
+    "directory": "/home/llama.cpp/build",
+    "command": "/developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/cc -DACCELERATE_LAPACK_ILP64 -DACCELERATE_NEW_LAPACK -DGGML_SCHED_MAX_COPIES=4 -DGGML_USE_ACCELERATE -DGGML_USE_LLAMAFILE -DGGML_USE_METAL -D_DARWIN_C_SOURCE -D_XOPEN_SOURCE=600 -I/home/llama.cpp/. -F/developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX14.4.sdk/System/Library/Frameworks -O3 -DNDEBUG -std=gnu11 -arch arm64 -isysroot /developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX14.4.sdk -Wshadow -Wstrict-prototypes -Wpointer-arith -Wmissing-prototypes -Werror=implicit-int -Werror=implicit-function-declaration -Wall -Wextra -Wpedantic -Wcast-qual -Wno-unused-function -Wunreachable-code-break -Wunreachable-code-return -Wdouble-promotion -o CMakeFiles/ggml.dir/ggml-alloc.c.o -c /home/llama.cpp/ggml-alloc.c",
+    "file": "/home/llama.cpp/ggml-alloc.c",
+    "output": "CMakeFiles/ggml.dir/ggml-alloc.c.o"
+  },
+  {
+    "directory": "/home/llama.cpp/build",
+    "command": "/developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/cc -DACCELERATE_LAPACK_ILP64 -DACCELERATE_NEW_LAPACK -DGGML_SCHED_MAX_COPIES=4 -DGGML_USE_ACCELERATE -DGGML_USE_LLAMAFILE -DGGML_USE_METAL -D_DARWIN_C_SOURCE -D_XOPEN_SOURCE=600 -I/home/llama.cpp/. -F/developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX14.4.sdk/System/Library/Frameworks -O3 -DNDEBUG -std=gnu11 -arch arm64 -isysroot /developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX14.4.sdk -Wshadow -Wstrict-prototypes -Wpointer-arith -Wmissing-prototypes -Werror=implicit-int -Werror=implicit-function-declaration -Wall -Wextra -Wpedantic -Wcast-qual -Wno-unused-function -Wunreachable-code-break -Wunreachable-code-return -Wdouble-promotion -o CMakeFiles/ggml.dir/ggml-backend.c.o -c /home/llama.cpp/ggml-backend.c",
+    "file": "/home/llama.cpp/ggml-backend.c",
+    "output": "CMakeFiles/ggml.dir/ggml-backend.c.o"
+  }
+]
