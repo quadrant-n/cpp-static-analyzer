@@ -33,9 +33,9 @@ def test_path_converter(config_string):
 
     for key, value in path_conv.items():
         if key == '/Users/nus/test':
-            assert value == '/test', 'Value for {key} must be "/test"'
+            assert value == '/test', f'Value for {key} must be "/test"'
         elif key == '/Users/nus/build':
-            assert value == '/build', 'Value for {key} must be "/build"'
+            assert value == '/build', f'Value for {key} must be "/build"'
 
 def test_check_flags(config_string):
     config = yaml.safe_load(config_string)
@@ -46,6 +46,6 @@ def test_check_flags(config_string):
     org_flags = config['Checks']
     for key, value in checks.items():
         if key in org_flags:
-            assert org_flags[key] == value, '{key} must be {org_flags[key]}.'
+            assert org_flags[key] == value, f'{key} must be {org_flags[key]}.'
         else:
-            assert value == 0, '{key} must be 0.'
+            assert value == 0, f'{key} must be 0.'
