@@ -66,6 +66,20 @@ def load_compile_commands(filename):
         data = json.load(f)
     return data
 
+def convert_path(path: str, converter: dict):
+    result = path
+    for key, value in converter.items():
+        index = path.find(key)
+        if index >= 0:
+            if index > 0:
+                sub_str0 = path[0:index]
+            else:
+                sub_str0 = ''
+            sub_str1 = path[len(key) + index:]
+            result = sub_str0 + value + sub_str1
+            break
+    return result
+
 class Entry(object):
     directory = ''
     arguments = []

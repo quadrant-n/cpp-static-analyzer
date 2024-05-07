@@ -42,6 +42,8 @@ def main(compile_commands_json: str):
             print(msg)
             break
 
+        time.sleep(0.5)
+
     thread_mgr.join_all_threads()
     thread_mgr.remove_all_threads()
 
