@@ -66,7 +66,7 @@ def load_compile_commands(filename):
         data = json.load(f)
     return data
 
-class Entry:
+class Entry(object):
     directory = ''
     arguments = []
     input_path = ''
