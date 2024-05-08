@@ -11,7 +11,11 @@
             "program": "main.py",
             "cwd": "${workspaceFolder}",
             "console": "integratedTerminal",
-            "args": "compile_commands.json"
+            "args": [
+                "--jobs",
+                "8",
+                "compile_commands.json"
+            ]
         }
     ]
 }

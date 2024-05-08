@@ -6,14 +6,33 @@ import command_manager as cm
 import thread_manager as tm
 import threading
 import time
+import config as cfg
+import sys
+import os
 
-def main(compile_commands_json: str):
+def main(arguments):
+    compile_commands_json = arguments.input_file
+    config_yaml = arguments.config_file
+    num_of_jobs = arguments.jobs
+    out_dir = arguments.output_dir
+
+    # Check output directory.
+    if fpath.exists(out_dir) == False:
+        os.mkdir(out_dir)
+    elif fpath.isfile(out_dir):
+        print(f'Output {out_dir} must be adirectory.')
+        return -1
+    else:
+        print(f'Using existing {out_dir} as output directory.')
+
     cmd_mgr = cm.CommandManager(compile_commands_json)
     thread_mgr = tm.ThreadManager()
+    config = cfg.Config(config_yaml)
 
-    for ii in range(4):
+    job_args = (cmd_mgr, config, out_dir)
+    for ii in range(num_of_jobs):
         thread_mgr.add_thread(threading.Thread(target=cm.CommandManager.job,
-                                               args=(cmd_mgr,)))
+                                               args=job_args))
 
     thread_mgr.start_all_threads()
 
@@ -49,10 +68,14 @@ def main(compile_commands_json: str):
 
     if len(cmd_mgr) == cmd_mgr.get_current_index():
         print('All commands processed successfully!')
-    else:
-        print('Some commands failed to process!')
+        return 0
+
+    print('Some commands failed to process!')
+    return 1
 
 def check_file(path, parser):
+    if path == '':
+        return ''
     if not fpath.isfile(path):
         parser.error('File {path} not found.')
     else:
@@ -60,10 +83,23 @@ def check_file(path, parser):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='C/CPP static analyzer using clang-tidy.')
+
+    parser.add_argument('-cfg', '--config-file',
+                        type=lambda file_path: check_file(file_path, parser),
+                        help='Path YAML config file.',
+                        default='')
+    parser.add_argument('-o', '--output-dir',
+                        type=str,
+                        help='Output directory',
+                        default='./out')
+    parser.add_argument('-j', '--jobs',
+                        type=int,
+                        help='Number of jobs.',
+                        default=1)
     parser.add_argument('input_file',
                         type=lambda file_path: check_file(file_path, parser),
                         help='Compile commands to load.')
 
     args = parser.parse_args()
 
-    main(args.input_file)
+    sys.exit(main(arguments=args))

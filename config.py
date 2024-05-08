@@ -2,7 +2,7 @@ from collections import defaultdict
 import yaml
 
 default_config = {
-    'ClangTidy': '/usr/bin/clang-tidy',
+    'ClangTidy': 'clang-tidy',
     'Checks': {
         'abseil': 0,
         'altera': 0,
@@ -75,10 +75,14 @@ def get_clang_tidy(config):
     return default_config['ClangTidy']
 
 class Config(object):
-    def __init__(self, yaml_file_path) -> None:
-        config = load(yaml_file_path)
+    def __init__(self, yaml_file_path):
+        if yaml_file_path == '':
+            config = default_config
+        else:
+            config = load(yaml_file_path)
+
         self.path_converter = get_path_converter(config)
-        
+
         check_flags = get_check_flags(config)
         self.checks = '-*'
         for key, value in check_flags.items():
@@ -87,5 +91,5 @@ class Config(object):
         if self.checks == '-*':
             print('Using default clang-analyzer check.')
             self.checks += f',clang-analyzer-*'
-            
-        self.clang_tidy = get_clang_tidy(config)
+
+            self.clang_tidy = get_clang_tidy(config)
