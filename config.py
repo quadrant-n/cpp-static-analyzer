@@ -92,4 +92,4 @@ class Config(object):
             print('Using default clang-analyzer check.')
             self.checks += f',clang-analyzer-*'
 
-            self.clang_tidy = get_clang_tidy(config)
+        self.clang_tidy = get_clang_tidy(config)

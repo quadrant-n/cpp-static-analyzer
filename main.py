@@ -11,6 +11,7 @@ import sys
 import os
 
 def main(arguments):
+    ''' Main function. '''
     compile_commands_json = arguments.input_file
     config_yaml = arguments.config_file
     num_of_jobs = arguments.jobs
@@ -73,7 +74,7 @@ def main(arguments):
     print('Some commands failed to process!')
     return 1
 
-def check_file(path, parser):
+def _check_file(path, parser):
     if path == '':
         return ''
     if not fpath.isfile(path):
@@ -85,7 +86,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='C/CPP static analyzer using clang-tidy.')
 
     parser.add_argument('-cfg', '--config-file',
-                        type=lambda file_path: check_file(file_path, parser),
+                        type=lambda file_path: _check_file(file_path, parser),
                         help='Path YAML config file.',
                         default='')
     parser.add_argument('-o', '--output-dir',
@@ -97,7 +98,7 @@ if __name__ == "__main__":
                         help='Number of jobs.',
                         default=1)
     parser.add_argument('input_file',
-                        type=lambda file_path: check_file(file_path, parser),
+                        type=lambda file_path: _check_file(file_path, parser),
                         help='Compile commands to load.')
 
     args = parser.parse_args()
