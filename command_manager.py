@@ -66,6 +66,8 @@ class CommandManager:
 
 
             proc = sproc.run(exec_cmd,
+                             encoding='utf-8',
+                             shell=True,
                              stdout=sproc.PIPE,
                              stderr=sproc.DEVNULL,
                              text=True)

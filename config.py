@@ -1,4 +1,5 @@
 from collections import defaultdict
+import pathlib as plib
 import yaml
 
 default_config = {
@@ -70,7 +71,7 @@ def get_check_flags(config):
 
 def get_clang_tidy(config):
     if 'ClangTidy' in config:
-        return config['ClangTidy']
+        return plib.Path(config['ClangTidy']).as_posix()
     print('No clang-tidy available.')
     return default_config['ClangTidy']
 

@@ -9,13 +9,14 @@ import time
 import config as cfg
 import sys
 import os
+import pathlib as plib
 
 def main(arguments):
     ''' Main function. '''
     compile_commands_json = arguments.input_file
     config_yaml = arguments.config_file
     num_of_jobs = arguments.jobs
-    out_dir = arguments.output_dir
+    out_dir = plib.Path(arguments.output_dir).as_posix()
 
     # Check output directory.
     if fpath.exists(out_dir) == False:
@@ -79,6 +80,7 @@ def _check_file(path, parser):
         return ''
     if not fpath.isfile(path):
         parser.error('File {path} not found.')
+        return ''
     else:
         return path
 
