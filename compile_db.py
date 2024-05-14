@@ -1,4 +1,5 @@
 import json
+import pathlib as plib
 
 def get_next_quote(it, cc, cmd):
     result = cc
@@ -88,7 +89,7 @@ class Entry(object):
 
     def __init__(self, dictionary):
         if 'directory' in dictionary:
-            self.directory = dictionary['directory']
+            self.directory = plib.Path(dictionary['directory']).as_posix()
         else:
             self.directory = ''
 
@@ -98,11 +99,11 @@ class Entry(object):
             self.arguments = get_command(dictionary)
 
         if 'file' in dictionary:
-            self.input_path = dictionary['file']
+            self.input_path = plib.Path(dictionary['file']).as_posix()
         else:
             self.input_path = ''
 
         if 'output' in dictionary:
-            self.output_path = dictionary['output']
+            self.output_path = plib.Path(dictionary['output']).as_posix()
         else:
             self.output_path = ''

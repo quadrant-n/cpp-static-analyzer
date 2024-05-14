@@ -47,8 +47,8 @@ class CommandManager:
 
             exec_cmd.append(config.clang_tidy)
             exec_cmd.append('--quiet')
-            exec_cmd.append('--header-filter=*')
-            exec_cmd.append(f'--checks={config.checks}')
+            exec_cmd.append('--header-filter=".*"')
+            exec_cmd.append(f'--checks="{config.checks}"')
 
             conv_input_path = cdb.convert_path(entry.input_path,
                                                config.path_converter)
@@ -63,13 +63,18 @@ class CommandManager:
             file_name = os.path.basename(entry.input_path)
             file_id = hashlib.md5(entry.input_path.encode('utf-8')).hexdigest()
             output_file_path = f'{output_directory}/{file_name}.{file_id}'
-
+            
+            if os.name == 'nt':
+                force_shell = True
+            else:
+                force_shell = False
 
             proc = sproc.run(exec_cmd,
                              encoding='utf-8',
-                             shell=True,
+                             shell=force_shell,
                              stdout=sproc.PIPE,
                              stderr=sproc.DEVNULL,
+                             universal_newlines=True,
                              text=True)
 
             if len(proc.stdout) > 0:
