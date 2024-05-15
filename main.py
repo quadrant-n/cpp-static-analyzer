@@ -10,9 +10,9 @@ import config as cfg
 import sys
 import os
 import pathlib as plib
+import json
 
-def main(arguments):
-    ''' Main function. '''
+def _execute_analyzer(arguments):
     compile_commands_json = arguments.input_file
     config_yaml = arguments.config_file
     num_of_jobs = arguments.jobs
@@ -75,6 +75,30 @@ def main(arguments):
     print('Some commands failed to process!')
     return 1
 
+def _execute_dump_compile_commands(arguments):
+    compile_commands_json = arguments.input_file
+    dump_compile_commands = arguments.dump_compile_commands
+    config_yaml = arguments.config_file
+
+    cmd_mgr = cm.CommandManager(compile_commands_json)
+    config = cfg.Config(config_yaml)
+
+    result_json = cmd_mgr.dump_compile_commands(config)
+
+    with open(dump_compile_commands, 'w') as output_file:
+        print(json.dumps(result_json, indent=2), file=output_file)
+
+    return 0
+
+def main(arguments):
+    ''' Main function. '''
+    dump_compile_commands = arguments.dump_compile_commands
+    
+    if(dump_compile_commands != ''):
+        return _execute_dump_compile_commands(arguments)
+    
+    return _execute_analyzer(arguments)
+
 def _check_file(path, parser):
     if path == '':
         return ''
@@ -87,6 +111,10 @@ def _check_file(path, parser):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='C/CPP static analyzer using clang-tidy.')
 
+    parser.add_argument('-dcc', '--dump-compile-commands',
+                        type=str,
+                        help='Dump compile commands to a file.',
+                        default='')
     parser.add_argument('-cfg', '--config-file',
                         type=lambda file_path: _check_file(file_path, parser),
                         help='Path YAML config file.',

@@ -31,7 +31,8 @@ default_config = {
         'readability': 0,
         'zircon': 0
     },
-    'PathConverter': {}
+    'PathConverter': {},
+    'AdditionalOptions': {}
 }
 
 def load(yaml_file_path):
@@ -94,3 +95,8 @@ class Config(object):
             self.checks += f',clang-analyzer-*'
 
         self.clang_tidy = get_clang_tidy(config)
+        
+        if 'AdditionalOptions' in config:
+            self.additional_opts = config['AdditionalOptions']
+        else:
+            self.additional_opts = default_config['AdditionalOptions']
