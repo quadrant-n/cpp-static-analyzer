@@ -5,31 +5,36 @@ import yaml
 default_config = {
     'ClangTidy': 'clang-tidy',
     'Checks': {
-        'abseil': 0,
-        'altera': 0,
-        'android': 0,
-        'boost': 0,
-        'bugprone': 0,
-        'cert': 0,
-        'clang-analyzer': 0,
-        'concurrency': 0,
-        'cppcoreguidelines': 0,
-        'darwin': 0,
-        'fuchsia': 0,
-        'google': 0,
-        'hicpp': 0,
-        'linuxkernel': 0,
-        'llvm': 0,
-        'llvmlibc': 0,
-        'misc': 0,
-        'modernize': 0,
-        'mpi': 0,
-        'objc': 0,
-        'openmp': 0,
-        'performance': 0,
-        'portability': 0,
-        'readability': 0,
-        'zircon': 0
+        '-*',
+        'abseil-*',
+        'altera-*',
+        'android-*',
+        'boost-*',
+        'bugprone-*',
+        'cert-*',
+        'clang-analyzer-*',
+        'concurrency-*',
+        'cppcoreguidelines-*',
+        'darwin-*',
+        'fuchsia-*',
+        'google-*',
+        'hicpp-*',
+        'linuxkernel-*',
+        'llvm-*',
+        'llvmlibc-*',
+        'misc-*',
+        'modernize-*',
+        'mpi-*',
+        'objc-*',
+        'openmp-*',
+        'performance-*',
+        'portability-*',
+        'readability-*',
+        'zircon-*'
+    },
+    'Warnings': {
+        '-Wall',
+        '-Wextra'
     },
     'PathConverter': {},
     'AdditionalOptions': {}
@@ -48,55 +53,54 @@ def load(yaml_file_path):
         return default_config
 
 def get_path_converter(config):
-    if 'PathConverter' in config:
+    if 'PathConverter' in config and config['PathConverter'] is not None:
         return config['PathConverter']
     print('No path converter available.')
     return default_config['PathConverter']
 
 def get_check_flags(config):
-    if 'Checks' in config:
-        checks = config['Checks']
-        default_checks = default_config['Checks']
-        result = {}
-
-        for key, value in default_checks.items():
-            if key in checks:
-                result[key] = checks[key]
-            else:
-                result[key] = 0
-
-        return result
-
-    print('No checks available.')
-    return default_config['Checks']
+    if 'Checks' in config and config['Checks'] is not None:
+        return ','.join(config['Checks'])
+    print('No check flags available. Using all avaliable checks.')
+    return ','.join(default_config['Checks'])
 
 def get_clang_tidy(config):
-    if 'ClangTidy' in config:
+    if 'ClangTidy' in config and config['ClangTidy'] is not None:
         return plib.Path(config['ClangTidy']).as_posix()
     print('No clang-tidy available.')
     return default_config['ClangTidy']
 
+def get_additional_options(config):
+    if 'AdditionalOptions' in config and config['AdditionalOptions'] is not None:
+        return ' '.join(config['AdditionalOptions'])
+    print('No additional options available.')
+    return ' '.join(default_config['AdditionalOptions'])
+
+def get_warnings(config):
+    if 'Warnings' in config and config['Warnings'] is not None:
+        return ' '.join(config['Warnings'])
+    print('No warnings available. Using -Wall and -Wextra.')
+    return ' '.join(default_config['Warnings'])
+
 class Config(object):
-    def __init__(self, yaml_file_path):
-        if yaml_file_path == '':
-            config = default_config
+    path_converter = []
+    checks = ''
+    clang_tidy = ''
+    additional_options = ''
+    warnings = ''
+
+    def __init__(self, yaml):
+        if isinstance(yaml, str):
+            yaml_file_path = yaml
+            if yaml_file_path == '':
+                config = default_config
+            else:
+                config = load(yaml_file_path)
         else:
-            config = load(yaml_file_path)
+            config = yaml
 
         self.path_converter = get_path_converter(config)
-
-        check_flags = get_check_flags(config)
-        self.checks = '-*'
-        for key, value in check_flags.items():
-            if value != 0:
-                self.checks += f',{key}-*'
-        if self.checks == '-*':
-            print('Using default clang-analyzer check.')
-            self.checks += f',clang-analyzer-*'
-
+        self.checks = get_check_flags(config)
         self.clang_tidy = get_clang_tidy(config)
-        
-        if 'AdditionalOptions' in config:
-            self.additional_opts = config['AdditionalOptions']
-        else:
-            self.additional_opts = default_config['AdditionalOptions']
+        self.additional_options = get_additional_options(config)
+        self.warnings = get_warnings(config)
