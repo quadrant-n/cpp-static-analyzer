@@ -36,6 +36,7 @@ default_config = {
         '-Wall',
         '-Wextra'
     },
+    'HeaderFilterRegex': '',
     'PathConverter': {},
     'AdditionalOptions': {}
 }
@@ -82,12 +83,21 @@ def get_warnings(config):
     print('No warnings available. Using -Wall and -Wextra.')
     return default_config['Warnings']
 
+def get_header_filter(config):
+    if 'HeaderFilterRegex' in config and config['HeaderFilterRegex'] is not None:
+        return config['HeaderFilterRegex']
+    print('No header filter regex available. Using \'.*\' as default.')
+    return default_config['HeaderFilterRegex']
+
+
+
 class Config(object):
     path_converter = []
     checks = ''
     clang_tidy = ''
     additional_options = []
     warnings = []
+    header_filter = ''
 
     def __init__(self, yaml):
         if isinstance(yaml, str):
@@ -104,3 +114,4 @@ class Config(object):
         self.clang_tidy = get_clang_tidy(config)
         self.additional_options = get_additional_options(config)
         self.warnings = get_warnings(config)
+        self.header_filter = get_header_filter(config)

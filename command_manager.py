@@ -13,8 +13,11 @@ def _execute_clang_tidy(command, config: cfg.Config) -> tuple[cdb.Entry, str, st
 
     exec_cmd.append(config.clang_tidy)
     exec_cmd.append('--quiet')
-    exec_cmd.append('--header-filter=".*"')
-    exec_cmd.append(f'--checks="{config.checks}"')
+
+    if config.header_filter != '':
+        exec_cmd.append(f'--header-filter={config.header_filter}')
+
+    exec_cmd.append(f'--checks={config.checks}')
 
     for additional_option in config.additional_options:
         exec_cmd.append(additional_option)
