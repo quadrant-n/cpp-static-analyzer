@@ -3,6 +3,7 @@
 import os.path as fpath
 import argparse
 import command_manager as cm
+import compile_db as cdb
 import thread_manager as tm
 import threading
 import time
@@ -12,20 +13,30 @@ import os
 import pathlib as plib
 import json
 
-def _execute_analyzer(arguments):
+def _execute_analyzer(arguments) -> int:
     compile_commands_json = arguments.input_file
     config_yaml = arguments.config_file
     num_of_jobs = arguments.jobs
     out_dir = plib.Path(arguments.output_dir).as_posix()
+    err_dir = out_dir + '/errors'
 
     # Check output directory.
     if fpath.exists(out_dir) == False:
         os.mkdir(out_dir)
     elif fpath.isfile(out_dir):
-        print(f'Output {out_dir} must be adirectory.')
+        print(f'Output {out_dir} must be a directory.')
         return -1
     else:
         print(f'Using existing {out_dir} as output directory.')
+
+    # Check error directory.
+    if fpath.exists(err_dir) == False:
+        os.mkdir(err_dir)
+    elif fpath.isfile(err_dir):
+        print(f'Error {err_dir} must be a directory.')
+        return -1
+    else:
+        print(f'Using existing {err_dir} as error directory.')
 
     cmd_mgr = cm.CommandManager(compile_commands_json)
     thread_mgr = tm.ThreadManager()
@@ -75,28 +86,52 @@ def _execute_analyzer(arguments):
     print('Some commands failed to process!')
     return 1
 
-def _execute_dump_compile_commands(arguments):
+def _execute_dump_compile_commands(arguments) -> int:
     compile_commands_json = arguments.input_file
-    dump_compile_commands = arguments.dump_compile_commands
-    config_yaml = arguments.config_file
+    commands = cdb.load_compile_commands(compile_commands_json)
 
-    cmd_mgr = cm.CommandManager(compile_commands_json)
+    config_yaml = arguments.config_file
     config = cfg.Config(config_yaml)
 
-    result_json = cmd_mgr.dump_compile_commands(config)
+    compile_commands = []
+    for command in commands:
+        entry = cdb.Entry(command)
+        entry_dict = {}
 
+        entry_dict['directory'] = cdb.convert_path(entry.directory,
+                                                   config.path_converter)
+
+        command_str = ''
+        for arg in entry.arguments:
+            if command_str != '':
+                command_str += ' '
+            command_str += cdb.convert_path(arg, config.path_converter)
+
+        entry_dict['command'] = command_str
+
+        if entry.input_path != '':
+            entry_dict['file'] = cdb.convert_path(entry.input_path,
+                                                  config.path_converter)
+
+        if entry.output_path != '':
+            entry_dict['output'] = cdb.convert_path(entry.output_path,
+                                                    config.path_converter)
+
+        compile_commands.append(entry_dict)
+
+    dump_compile_commands = arguments.dump_compile_commands
     with open(dump_compile_commands, 'w') as output_file:
-        print(json.dumps(result_json, indent=2), file=output_file)
+        print(json.dumps(compile_commands, indent=2), file=output_file)
 
     return 0
 
-def main(arguments):
+def main(arguments) -> int:
     ''' Main function. '''
     dump_compile_commands = arguments.dump_compile_commands
-    
+
     if(dump_compile_commands != ''):
         return _execute_dump_compile_commands(arguments)
-    
+
     return _execute_analyzer(arguments)
 
 def _check_file(path, parser):

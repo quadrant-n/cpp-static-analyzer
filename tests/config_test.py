@@ -46,6 +46,7 @@ def test_check_flags(config_string):
     org_checks = cfg.get_check_flags(config_yaml)
     config = cfg.Config(config_yaml)
     checks = config.checks.split(',')
+
     for check in checks:
         assert check in org_checks, \
             f'Check {check} is not in the list of original checks.'
@@ -55,9 +56,8 @@ def test_warnings(config_string):
 
     org_warnings = cfg.get_warnings(config_yaml)
     config = cfg.Config(config_yaml)
-    warnings = config.warnings.split(' ')
 
-    for warning in warnings:
+    for warning in config.warnings:
         assert warning in org_warnings, \
             f'Warning {warning} is not in the list of original warnings.'
 
@@ -75,5 +75,4 @@ def test_empty_check_flags(empty_config_string):
 def test_empty_warnings(empty_config_string):
     config_yaml = yaml.safe_load(empty_config_string)
     config = cfg.Config(config_yaml)
-    warnings = config.warnings.split(' ')
-    assert len(warnings) == 2, 'Must be default 2 warnings.'
+    assert len(config.warnings) == 2, 'Must be default 2 warnings.'

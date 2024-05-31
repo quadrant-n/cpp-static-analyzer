@@ -72,22 +72,22 @@ def get_clang_tidy(config):
 
 def get_additional_options(config):
     if 'AdditionalOptions' in config and config['AdditionalOptions'] is not None:
-        return ' '.join(config['AdditionalOptions'])
+        return config['AdditionalOptions']
     print('No additional options available.')
-    return ' '.join(default_config['AdditionalOptions'])
+    return default_config['AdditionalOptions']
 
 def get_warnings(config):
     if 'Warnings' in config and config['Warnings'] is not None:
-        return ' '.join(config['Warnings'])
+        return config['Warnings']
     print('No warnings available. Using -Wall and -Wextra.')
-    return ' '.join(default_config['Warnings'])
+    return default_config['Warnings']
 
 class Config(object):
     path_converter = []
     checks = ''
     clang_tidy = ''
-    additional_options = ''
-    warnings = ''
+    additional_options = []
+    warnings = []
 
     def __init__(self, yaml):
         if isinstance(yaml, str):
