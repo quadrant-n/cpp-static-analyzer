@@ -35,14 +35,9 @@ def _execute_clang_tidy(command, config: cfg.Config) -> tuple[cdb.Entry, str, st
     for warning in config.warnings:
         exec_cmd.append(warning)
 
-    if os.name == 'nt':
-        force_shell = True
-    else:
-        force_shell = False
-
     proc = sproc.run(exec_cmd,
                      encoding='utf-8',
-                     shell=force_shell,
+                     shell=False,
                      stdout=sproc.PIPE,
                      stderr=sproc.PIPE,
                      universal_newlines=True,

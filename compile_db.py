@@ -81,6 +81,16 @@ def convert_path(path: str, converter: dict):
             break
     return result
 
+def filter_warnings(commands):
+    filtered_commands = []
+
+    for command in commands:
+        if command.startswith('-w') or command.startswith('-W'):
+            continue
+        filtered_commands.append(command)
+
+    return filtered_commands
+
 class Entry(object):
     directory = ''
     arguments = []
@@ -97,6 +107,8 @@ class Entry(object):
             self.arguments = get_arguments(dictionary)
         elif 'command' in dictionary:
             self.arguments = get_command(dictionary)
+
+        self.arguments = filter_warnings(self.arguments)
 
         if 'file' in dictionary:
             self.input_path = plib.Path(dictionary['file']).as_posix()

@@ -144,7 +144,7 @@ def _check_file(path, parser):
         return path
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description='C/CPP static analyzer using clang-tidy.')
+    parser = argparse.ArgumentParser(description='C/C++ static analyzer using clang-tidy.')
 
     parser.add_argument('-dcc', '--dump-compile-commands',
                         type=str,

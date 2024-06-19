@@ -45,6 +45,19 @@ def path_converter():
 def empty_path_converter():
     return {}
 
+@pytest.fixture
+def compile_command():
+    return ['c++',
+            '-I/Users/nus/include',
+            '-O3',
+            '-DNDEBUG',
+            '-w',
+            '-Wall',
+            '-Wextra'
+            '-o'
+            '/Users/nus/x.out',
+            'x.cpp']
+
 def test_command_parser(compile_commands_json):
     command_list = cdb.get_command(compile_commands_json[0])
     assert len(command_list) == 9, 'Must find 9 commands.'
@@ -122,3 +135,11 @@ def test_empty_path_converter(compile_commands_json, empty_path_converter):
     for ii in range(len(results)):
         assert results[ii] == path_conversion_results[ii], \
             f'Argument-{ii} must be unchanged.'
+
+def test_filter_command(compile_command):
+    filtered_commands = cdb.filter_warnings(compile_command)
+    for filtered_command in filtered_commands:
+        assert filtered_command.startswith('-w') == False, \
+            f'Argument {filtered_command} must be filtered.'
+        assert filtered_command.startswith('-W') == False, \
+            f'Argument {filtered_command} must be filtered.'
