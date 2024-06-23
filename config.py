@@ -1,6 +1,7 @@
 from collections import defaultdict
 import pathlib as plib
 import yaml
+import os
 
 default_config = {
     'ClangTidy': 'clang-tidy',
@@ -41,6 +42,17 @@ default_config = {
     'AdditionalOptions': {}
 }
 
+def search_for_config_file(path):
+    current_path = plib.Path(path)
+    if current_path.is_file():
+        current_path = current_path.parent
+    parents = current_path.parents
+    for parent in parents:
+        config_file_path = os.path.join(parent.as_posix(), 'config.yml')
+        if os.path.exists(config_file_path):
+            return config_file_path
+    return ''
+
 def load(yaml_file_path):
     try:
         with open(yaml_file_path, 'r') as file:
@@ -66,6 +78,7 @@ def get_check_flags(config):
     return ','.join(default_config['Checks'])
 
 def get_clang_tidy(config):
+
     if 'ClangTidy' in config and config['ClangTidy'] is not None:
         return plib.Path(config['ClangTidy']).as_posix()
     print('No clang-tidy available.')

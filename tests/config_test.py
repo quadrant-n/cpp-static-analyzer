@@ -3,6 +3,9 @@
 import config as cfg
 import pytest
 import yaml
+import os
+
+
 
 @pytest.fixture
 def yaml_config():
@@ -31,6 +34,30 @@ def yaml_empty_config():
     HeaderFilterRegex:
     '''
     return yaml.safe_load(yaml_string)
+
+@pytest.fixture
+def file_in_nested_directory():
+    cwd = os.getcwd()
+    return os.path.join(cwd, 'tests/deep/nested/directory/for/testing.txt')
+
+@pytest.fixture
+def nested_directory():
+    cwd = os.getcwd()
+    return os.path.join(cwd, 'tests/deep/nested/directory/for/')
+
+@pytest.fixture
+def directory_not_exist():
+    cwd = os.getcwd()
+    return os.path.join(cwd, 'tests/not_exist')
+
+
+
+# Helper.
+def config_yml_file_path():
+    cwd = os.getcwd()
+    return os.path.join(cwd, 'tests/deep/config.yml')
+
+
 
 def test_path_converter(yaml_config):
     path_conv = cfg.get_path_converter(yaml_config)
@@ -80,3 +107,17 @@ def test_empty_warnings(yaml_empty_config):
 def test_empty_header_filter(yaml_empty_config):
     config = cfg.Config(yaml_empty_config)
     assert config.header_filter == '', 'Header filter must be empty.'
+
+def test_search_for_config(nested_directory):
+    config_path = cfg.search_for_config_file(nested_directory)
+    config_yml_path = config_yml_file_path()
+    assert config_path == config_yml_path, 'Must find config.yml.'
+
+def test_search_for_config_using_file(file_in_nested_directory):
+    config_path = cfg.search_for_config_file(file_in_nested_directory)
+    config_yml_path = config_yml_file_path()
+    assert config_path == config_yml_path, 'Must find config.yml.'
+
+def test_search_for_config_not_exist(directory_not_exist):
+    config_path = cfg.search_for_config_file(directory_not_exist)
+    assert config_path == '', 'Must be an empty string.'

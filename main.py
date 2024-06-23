@@ -157,15 +157,22 @@ if __name__ == "__main__":
     parser.add_argument('-o', '--output-dir',
                         type=str,
                         help='Output directory',
-                        default='./out')
+                        default='')
     parser.add_argument('-j', '--jobs',
                         type=int,
                         help='Number of jobs.',
                         default=1)
+    parser.add_argument('-f', '--file',
+                        type=str,
+                        help='Analyze single file.',
+                        default='')
     parser.add_argument('input_file',
                         type=lambda file_path: _check_file(file_path, parser),
                         help='Compile commands to load.')
 
     args = parser.parse_args()
+
+    if args.input_file == '' and args.config_file == '':
+        args.config_file = cfg.search_for_config_file()
 
     sys.exit(main(arguments=args))
