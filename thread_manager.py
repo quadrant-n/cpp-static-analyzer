@@ -1,4 +1,5 @@
 import threading
+import console as con
 
 class ThreadManager:
     def __init__(self):
@@ -6,7 +7,8 @@ class ThreadManager:
 
     def add_thread(self, thread):
         if not isinstance(thread, threading.Thread):
-            print('Thread must be an instance of threading.Thread')
+            con.trace('Cannot add thread.')
+            con.error('Thread must be an instance of threading.Thread')
             return
         self.threads.append(thread)
 

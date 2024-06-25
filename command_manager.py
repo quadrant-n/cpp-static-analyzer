@@ -69,7 +69,8 @@ class CommandManager:
                 idx = -1
         finally:
             self._lock.release()
-            return idx
+
+        return idx
 
     def __getitem__(self, index):
         return self._commands[index]
@@ -80,10 +81,10 @@ class CommandManager:
     def get_current_index(self):
         return self._current_index
 
-    def job(command_manager, config: cfg.Config, output_directory: str):
-        index = command_manager.next_index()
+    def job(self, config: cfg.Config, output_directory: str):
+        index = self.next_index()
         while index >= 0:
-            command = command_manager[index]
+            command = self[index]
 
             entry, result, error = _execute_clang_tidy(command, config)
 
@@ -100,4 +101,4 @@ class CommandManager:
                 with open(error_file_path, 'w') as error_file:
                     print(error, file=error_file)
 
-            index = command_manager.next_index()
+            index = self.next_index()

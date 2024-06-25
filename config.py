@@ -1,9 +1,9 @@
-from collections import defaultdict
 import pathlib as plib
 import yaml
 import os
 
 default_config = {
+    'CompileCommands': '',
     'ClangTidy': 'clang-tidy',
     'Checks': {
         '-*',
@@ -78,7 +78,6 @@ def get_check_flags(config):
     return ','.join(default_config['Checks'])
 
 def get_clang_tidy(config):
-
     if 'ClangTidy' in config and config['ClangTidy'] is not None:
         return plib.Path(config['ClangTidy']).as_posix()
     print('No clang-tidy available.')
@@ -102,15 +101,22 @@ def get_header_filter(config):
     print('No header filter regex available. Using \'.*\' as default.')
     return default_config['HeaderFilterRegex']
 
+def get_compile_commands(config):
+    if 'CompileCommands' in config and config['CompileCommands'] is not None:
+        return plib.Path(config['CompileCommands']).as_posix()
+    print('No clang-tidy available.')
+    return default_config['CompileCommands']
+
 
 
 class Config(object):
-    path_converter = []
+    path_converter = {}
     checks = ''
     clang_tidy = ''
-    additional_options = []
-    warnings = []
+    additional_options = {}
+    warnings = {}
     header_filter = ''
+    compile_commands = ''
 
     def __init__(self, yaml):
         if isinstance(yaml, str):
@@ -128,3 +134,4 @@ class Config(object):
         self.additional_options = get_additional_options(config)
         self.warnings = get_warnings(config)
         self.header_filter = get_header_filter(config)
+        self.compile_commands = get_compile_commands(config)

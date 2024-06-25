@@ -11,13 +11,13 @@ class MockJobManager:
         self._lock = threading.Lock()
         self._count = 0
 
-    def job(manager):
-        for ii in range(10):
-            manager._lock.acquire()
+    def job(self):
+        for _ in range(10):
+            self._lock.acquire()
             try:
-                manager._count += 1
+                self._count += 1
             finally:
-                manager._lock.release()
+                self._lock.release()
 
 def test_thread_manager(thread_manager):
     job_mgr = MockJobManager()
