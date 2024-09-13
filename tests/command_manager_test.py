@@ -1,4 +1,4 @@
-import command_manager as cm
+import cpp_static_analyzer.command_manager as cm
 
 def test_command_manager():
     cmd_mgr = cm.CommandManager('tests/compile_commands.json')

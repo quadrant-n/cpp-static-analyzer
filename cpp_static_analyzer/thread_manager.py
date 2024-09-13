@@ -1,5 +1,5 @@
 import threading
-import console as con
+import cpp_static_analyzer.console as con
 
 class ThreadManager:
     def __init__(self):

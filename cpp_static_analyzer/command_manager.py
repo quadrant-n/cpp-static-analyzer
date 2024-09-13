@@ -1,11 +1,12 @@
-import compile_db as cdb
+import cpp_static_analyzer.compile_db as cdb
 import threading
-import config as cfg
+import cpp_static_analyzer.config as cfg
 import subprocess as sproc
 import os.path
 import hashlib
 
 def _execute_clang_tidy(command, config: cfg.Config) -> tuple[cdb.Entry, str, str]:
+    ''' Execute clang-tidy. '''
     entry = cdb.Entry(command)
 
     # Compose command line for clang-tidy.

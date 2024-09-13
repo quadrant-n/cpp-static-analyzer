@@ -1,6 +1,6 @@
 # config_test.py
 
-import config as cfg
+import cpp_static_analyzer.config as cfg
 import pytest
 import yaml
 import os

@@ -1,4 +1,4 @@
-import thread_manager as tm
+import cpp_static_analyzer.thread_manager as tm
 import threading
 import pytest
 

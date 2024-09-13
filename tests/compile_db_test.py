@@ -2,7 +2,7 @@
 
 import pytest
 import json
-import compile_db as cdb
+import cpp_static_analyzer.compile_db as cdb
 
 @pytest.fixture
 def compile_commands_json():

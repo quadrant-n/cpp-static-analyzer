@@ -1,0 +1,28 @@
+[tool.poetry]
+name = "cpp-static-analyzer"
+version = "0.0.1"
+description = "Static analyzer executor."
+authors = ["Stefanus Nanami <stefanus-nanami@capcom.com>"]
+license = "MIT"
+readme = "README.md"
+package-mode = true
+repository = "https://github.com/quadrant-n/cpp-static-analyzer"
+keywords = ["static", "analyzer", "C++"]
+
+[tool.poetry.urls]
+"Issues" = "https://github.com/quadrant-n/cpp-static-analyzer/issues"
+
+[tool.poetry.dependencies]
+python = "^3.12"
+pyyaml = "^6.0.2"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.3.3"
+flake8 = "^7.1.1"
+
+[tool.poetry.scripts]
+cpp-static-analyzer = "cpp_static_analyzer:run"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
