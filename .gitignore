@@ -5,3 +5,4 @@ result/*
 *flycheck*
 *.venv*
 errors*
+.dir-locals.el
