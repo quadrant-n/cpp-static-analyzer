@@ -1,12 +1,15 @@
-import cpp_static_analyzer.compile_db as cdb
-import threading
-import cpp_static_analyzer.config as cfg
+"""Static analyzer command manager."""
 import subprocess as sproc
+import threading
 import os.path
 import hashlib
 
-def _execute_clang_tidy(command, config: cfg.Config) -> tuple[cdb.Entry, str, str]:
-    ''' Execute clang-tidy. '''
+import cpp_static_analyzer.compile_db as cdb
+import cpp_static_analyzer.config as cfg
+
+
+def _execute_clang_tidy(command, config: cfg.Config) -> tuple:
+    """Execute clang-tidy."""
     entry = cdb.Entry(command)
 
     # Compose command line for clang-tidy.
@@ -23,17 +26,21 @@ def _execute_clang_tidy(command, config: cfg.Config) -> tuple[cdb.Entry, str, st
     for additional_option in config.additional_options:
         exec_cmd.append(additional_option)
 
-    conv_input_path = cdb.convert_path(entry.input_path,
-                                       config.path_converter)
+    input_path = entry.get_input_path()
+    path_converter = config.get_path_converter()
+    conv_input_path = cdb.convert_path(input_path,
+                                       path_converter)
     exec_cmd.append(f'{conv_input_path}')
 
     exec_cmd.append('--')
 
-    for arg in entry.arguments:
-        conv_str = cdb.convert_path(arg, config.path_converter)
+    arguments = entry.get_arguments()
+    for arg in arguments:
+        conv_str = cdb.convert_path(arg, path_converter)
         exec_cmd.append(conv_str)
 
-    for warning in config.warnings:
+    warnings = config.get_warnings()
+    for warning in warnings:
         exec_cmd.append(warning)
 
     proc = sproc.run(exec_cmd,
@@ -42,11 +49,15 @@ def _execute_clang_tidy(command, config: cfg.Config) -> tuple[cdb.Entry, str, st
                      stdout=sproc.PIPE,
                      stderr=sproc.PIPE,
                      universal_newlines=True,
-                     text=True)
+                     text=True,
+                     check=True)
 
     return entry, proc.stdout, proc.stderr
 
+
 class CommandManager:
+    """Command manager object."""
+
     _commands = []
     _command_count = 0
     _lock = threading.Lock()
@@ -59,17 +70,15 @@ class CommandManager:
         self._current_index = 0
 
     def next_index(self):
+        """Next index."""
         if self._current_index >= self._command_count:
             return -1
-        self._lock.acquire()
-        try:
+        with self._lock:
             if self._current_index < self._command_count:
                 idx = self._current_index
                 self._current_index += 1
             else:
                 idx = -1
-        finally:
-            self._lock.release()
 
         return idx
 
@@ -80,26 +89,33 @@ class CommandManager:
         return self._command_count
 
     def get_current_index(self):
+        """Get current index."""
         return self._current_index
 
-    def job(self, config: cfg.Config, output_directory: str):
+    def _write_to_file(self, content, file_path):
+        if len(content) > 0:
+            with open(file_path, 'w', encoding="utf-8") as output_file:
+                print(content, file=output_file)
+
+    def job(self,
+            config: cfg.Config,
+            output_directory: str,
+            error_directory: str):
+        """Command executor job."""
         index = self.next_index()
         while index >= 0:
             command = self[index]
 
             entry, result, error = _execute_clang_tidy(command, config)
 
-            file_name = os.path.basename(entry.input_path)
-            file_id = hashlib.md5(entry.input_path.encode('utf-8')).hexdigest()
+            input_path = entry.get_input_path()
+            file_name = os.path.basename(input_path)
+            file_id = hashlib.md5(file_name.encode('utf-8')).hexdigest()
+
             output_file_path = f'{output_directory}/{file_name}.{file_id}'
-            error_file_path = f'{output_directory}/errors/{file_name}.{file_id}'
+            error_file_path = f'{error_directory}/{file_name}.{file_id}'
 
-            if len(result) > 0:
-                with open(output_file_path, 'w') as output_file:
-                    print(result, file=output_file)
-
-            if len(error) > 0:
-                with open(error_file_path, 'w') as error_file:
-                    print(error, file=error_file)
+            self._write_to_file(result, output_file_path)
+            self._write_to_file(error, error_file_path)
 
             index = self.next_index()

@@ -1,6 +1,9 @@
+"""Test cases for command manager,"""
 import cpp_static_analyzer.command_manager as cm
 
+
 def test_command_manager():
+    """Testing command manager."""
     cmd_mgr = cm.CommandManager('tests/compile_commands.json')
     assert len(cmd_mgr) == 3, 'Must have four commands.'
 
