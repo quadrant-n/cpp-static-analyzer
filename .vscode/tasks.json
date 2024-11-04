@@ -44,6 +44,23 @@
                 "kind": "build",
                 "isDefault": true
             }
+        },
+        {
+            "label": "Create compile_commands.json for llama.cpp",
+            "type": "shell",
+            "command": "cmake",
+            "args": [
+                "-B",
+                "build",
+                "-DCMAKE_BUILD_TYPE=Release"
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}/tests/ext/llama.cpp"
+            },
+            "problemMatcher": [],
+            "group": {
+                 "kind": "build",
+             }
         }
     ]
 }
