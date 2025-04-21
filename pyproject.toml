@@ -20,10 +20,15 @@ pyyaml = "^6.0.2"
 pytest = "^8.3.3"
 flake8 = "^7.1.1"
 pylint = "^3.2.7"
+mypy = "^1.15.0"
+pyright = "^1.1.394"
 
 [tool.poetry.scripts]
-cpp-static-analyzer = "cpp_static_analyzer:run"
+cpp-static-analyzer = "src/cpp_static_analyzer:run"
 
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.pyright]
+include = ["src/cpp_static_analyzer", "src/tests"]

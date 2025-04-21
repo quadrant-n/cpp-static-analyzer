@@ -13,6 +13,16 @@
             "problemMatcher": []
         },
         {
+            "label": "Install root",
+            "type": "shell",
+            "command": "poetry",
+            "args": [
+                "install",
+                "--only-root"
+            ],
+            "problemMatcher": []
+        },
+        {
             "label": "Install developer dependencies",
             "type": "shell",
             "command": "poetry",
@@ -44,6 +54,17 @@
                 "kind": "build",
                 "isDefault": true
             }
+        },
+        {
+            "label": "Use virtual environment",
+            "type": "shell",
+            "command": "poetry",
+            "args": [
+                "env",
+                "use",
+                ".venv/bin/python",
+            ],
+            "problemMatcher": []
         },
         {
             "label": "Create compile_commands.json for llama.cpp",

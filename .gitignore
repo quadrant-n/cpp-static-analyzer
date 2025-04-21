@@ -6,3 +6,7 @@ result/*
 *.venv*
 errors*
 .dir-locals.el
+*.code-workspace
+tests/playground.py
+*.mypy*
+dist/*
