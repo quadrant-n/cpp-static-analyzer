@@ -221,10 +221,11 @@ def execute():
     # Absolute path to YAML configuration file.
     parser.add_argument('-cfg', '--config-file',
                         type=lambda
-                        file_path: _check_file(file_path, parser, 'Config file'),
+                        file_path: _check_file(file_path, parser,
+                                               'Config file'),
                         help='Path YAML config file.',
                         default='')
-    # Set output deictory for writing results.
+    # Set output directory for writing results.
     parser.add_argument('-o', '--output-dir',
                         type=str,
                         help='Output directory',

@@ -10,3 +10,5 @@ errors*
 tests/playground.py
 *.mypy*
 dist/*
+.coverage
+src/tests/playground.py

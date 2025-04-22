@@ -16,33 +16,24 @@ def _execute_clang_tidy(command, config: cfg.Config) -> tuple:
     # Compose command line for clang-tidy.
     exec_cmd = []
 
-    exec_cmd.append(config.clang_tidy)
+    exec_cmd.append(config.get_clang_tidy_executable())
     exec_cmd.append('--quiet')
 
-    if config.header_filter != '':
-        exec_cmd.append(f'--header-filter={config.header_filter}')
-
-    exec_cmd.append(f'--checks={config.checks}')
-
-    for additional_option in config.additional_options:
+    for additional_option in config.get_clang_tidy_additional_options():
         exec_cmd.append(additional_option)
 
     input_path = entry.get_input_path()
-    path_converter = config.get_path_converter()
+    path_converters = config.get_path_converters()
     conv_input_path = cdb.convert_path(input_path,
-                                       path_converter)
+                                       path_converters)
     exec_cmd.append(f'{conv_input_path}')
 
     exec_cmd.append('--')
 
     arguments = entry.get_arguments()
     for arg in arguments:
-        conv_str = cdb.convert_path(arg, path_converter)
+        conv_str = cdb.convert_path(arg, path_converters)
         exec_cmd.append(conv_str)
-
-    warnings = config.get_warnings()
-    for warning in warnings:
-        exec_cmd.append(warning)
 
     proc = sproc.run(exec_cmd,
                      encoding='utf-8',

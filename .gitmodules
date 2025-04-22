@@ -1,3 +1,0 @@
-[submodule "tests/ext/llama.cpp"]
-	path = tests/ext/llama.cpp
-	url = git@github.com:ggerganov/llama.cpp.git
