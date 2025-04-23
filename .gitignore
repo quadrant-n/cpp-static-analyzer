@@ -12,3 +12,6 @@ tests/playground.py
 dist/*
 .coverage
 src/tests/playground.py
+ext/
+*.code-workspace
+tests/sources/build

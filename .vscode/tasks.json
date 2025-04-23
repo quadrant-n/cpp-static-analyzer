@@ -67,21 +67,15 @@
             "problemMatcher": []
         },
         {
-            "label": "Create compile_commands.json for llama.cpp",
+            "label": "Use virtual environment",
             "type": "shell",
-            "command": "cmake",
+            "command": "poetry",
             "args": [
-                "-B",
-                "build",
-                "-DCMAKE_BUILD_TYPE=Release"
+                "env",
+                "use",
+                ".venv/bin/python",
             ],
-            "options": {
-                "cwd": "${workspaceFolder}/tests/ext/llama.cpp"
-            },
-            "problemMatcher": [],
-            "group": {
-                 "kind": "build",
-             }
+            "problemMatcher": []
         }
     ]
 }

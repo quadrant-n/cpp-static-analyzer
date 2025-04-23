@@ -25,11 +25,13 @@ pyright = "^1.1.394"
 pytest-cov = "^6.1.1"
 
 [tool.poetry.scripts]
-cpp-static-analyzer = "src/cpp_static_analyzer:run"
+cpp-static-analyzer = "cpp_static_analyzer:main"
 
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.pyright]
-include = ["src/cpp_static_analyzer", "src/tests"]
+include = ["src", "tests"]
+exclude = ["**/__pycache__"]
+reportArgumentType = false

@@ -1,8 +1,8 @@
-"""Default initializer."""
+"""Main program."""
 
 import cpp_static_analyzer.main as csa_main
 
 
-def run():
-    """Run main function."""
+def main():
+    """Run the main function."""
     csa_main.execute()

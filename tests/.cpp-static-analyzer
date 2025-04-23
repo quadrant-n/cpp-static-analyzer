@@ -1,0 +1,9 @@
+clang:
+  additional_options: {}
+  executable_path: clang
+clang-tidy:
+  additional_options: {}
+  config_file_path: ./.clang-tidy
+  executable_path: clang-tidy
+compile_commands: ./compile_commands.json
+path_converters: {}

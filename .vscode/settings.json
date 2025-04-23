@@ -1,8 +1,6 @@
 {
     "python.testing.pytestArgs": [
-        "--ignore",
-        "src/tests/ext",
-        "src/tests"
+        "tests"
     ],
     "python.testing.unittestEnabled": false,
     "python.testing.pytestEnabled": true,

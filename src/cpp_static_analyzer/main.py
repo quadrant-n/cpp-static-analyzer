@@ -186,6 +186,12 @@ def _execute_dump_compile_commands(arguments) -> int:
     return 0
 
 
+def _execute_dump_configurations() -> int:
+    """ Dump configurations. """
+    cfg.Config.write_default_config_to_stdout()
+    return 0
+
+
 def main(arguments) -> int:
     """ Main function. """
     dump_compile_commands = arguments.dump_compile_commands
@@ -213,32 +219,31 @@ def execute():
     parser = argparse.ArgumentParser(description='C/C++ static analyzer \
     using clang-tidy.')
 
-    # Dump compile commands to a file.
-    parser.add_argument('-dcc', '--dump-compile-commands',
-                        type=str,
-                        help='Dump compile commands to a file.',
-                        default='')
+    # Dump configurations.
+    parser.add_argument('-dc', '--dump-configurations',
+                        help='Print configurations to console.',
+                        action='store_true')
     # Absolute path to YAML configuration file.
-    parser.add_argument('-cfg', '--config-file',
+    parser.add_argument('-cfg', '--configuration-file',
                         type=lambda
                         file_path: _check_file(file_path, parser,
-                                               'Config file'),
-                        help='Path YAML config file.',
+                                               'Configuration file'),
+                        help='Path YAML configuration file.',
                         default='')
     # Set output directory for writing results.
     parser.add_argument('-o', '--output-dir',
                         type=str,
-                        help='Output directory',
+                        help='Output directory.',
                         default='')
     # Specify number of jobs to run static analyzer.
     parser.add_argument('-j', '--jobs',
                         type=int,
                         help='Number of jobs.',
                         default=1)
-    # Analyze single file using current settings.
-    parser.add_argument('-f', '--file',
+    # Path to compile_commands.json.
+    parser.add_argument('-cdb', '--compile-commands',
                         type=str,
-                        help='Analyze single file.',
+                        help='Path to compile_commands.json.',
                         default='')
     # Set logging verbosity.
     parser.add_argument('-v', '--verbosity',
@@ -246,11 +251,12 @@ def execute():
                         help='Log to stderr. 0: Quiet, 1: Information, \
                         2: Output debug logs.',
                         default=1)
-    # Use compile commands as input file.
-    parser.add_argument('input_file',
+    # Analyze single file.
+    parser.add_argument('-f', '--input-file',
                         type=lambda
-                        file_path: _check_file(file_path, parser, 'Input file'),
-                        help='Compile commands to load.',
+                        file_path: _check_file(file_path, parser,
+                                               'Input file.'),
+                        help='File to analyze.',
                         default='')
 
     args = parser.parse_args()
@@ -263,9 +269,12 @@ def execute():
     else:
         con.set_debug(con.DebugFlag.INFO)
 
+    if args.dump_configurations:
+        sys.exit(_execute_dump_configurations())
+
     # Search for YAML file.
     if args.input_file == '' and args.config_file == '':
-        args.config_file = cfg.search_for_config_file(os.getcwd())
+        args.config_file = cfg.Config.search_for_config_file(os.getcwd())
 
     # Execute main function and return exit code to system.
     sys.exit(main(arguments=args))
