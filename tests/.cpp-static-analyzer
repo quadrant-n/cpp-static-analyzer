@@ -3,7 +3,9 @@ clang:
   executable_path: clang
 clang-tidy:
   additional_options: {}
-  config_file_path: ./.clang-tidy
+  config_file_path: sources/.clang-tidy
   executable_path: clang-tidy
-compile_commands: ./compile_commands.json
+compile_commands: sources/build/compile_commands.json
+number_of_jobs: 1
+output_directory: out
 path_converters: {}

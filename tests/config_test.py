@@ -10,6 +10,9 @@ import cpp_static_analyzer.config as cfg
 def fixture_yaml_config():
     """Simple yaml config."""
     yaml_string = '''
+    compile_commands: tests/compile_commands.json
+    clang-tidy:
+      executable_path: ~/.local/bin/clang-tidy
     path_converters:
       /Users/nus/test: /test
       /Users/nus/build: /build
@@ -48,6 +51,13 @@ def fixture_directory_not_exist():
     """Unexisting directory."""
     cwd = os.getcwd()
     return os.path.join(cwd, 'tests/not_exist')
+
+
+@pytest.fixture(name='config_exist')
+def fixture_config_exist():
+    """Config file exists."""
+    cwd = os.getcwd()
+    return os.path.join(cwd, 'tests/deep/.cpp-static-analyzer')
 
 
 def config_yml_file_path():
@@ -98,10 +108,17 @@ def test_search_for_config_not_exist(directory_not_exist):
     assert config_path == '', 'Must be an empty string.'
 
 
+def test_search_for_config_exist(config_exist):
+    """Search for existing config file."""
+    config_path = \
+        cfg.Config.search_for_config_file(config_exist)
+    assert config_path != '', 'Must found .cpp-static-analyzer.'
+
+
 def test_empty_config(yaml_empty_config):
     """Testing empty config file."""
     config = cfg.Config(yaml_empty_config)
-    assert config.get_compile_commands() == '', \
+    assert config.get_compile_commands() == 'compile_commands.json', \
         'Must contain empty path.'
     assert config.get_clang_executable() == 'clang', \
         'Must be path to clang executable.'
@@ -109,17 +126,20 @@ def test_empty_config(yaml_empty_config):
         'Must have empty additional options.'
     assert config.get_clang_tidy_executable() == 'clang-tidy', \
         'Must be path to clang-tidy.'
-    assert config.get_clang_tidy_config_file() == './.clang-tidy', \
+    assert config.get_clang_tidy_config_file() == '.clang-tidy', \
         'Must be empty path string.'
     assert not config.get_clang_tidy_additional_options(), \
         'Must have empty additional options.'
     assert not config.get_path_converters(), \
         'Must have empty path converters.'
 
+
 def test_load_config_from_file(yaml_config):
     """Testing loading config from file."""
     config = cfg.Config(yaml_config)
-    assert config.get_compile_commands() == './compile_commands.json', \
+    assert config.get_compile_commands() == 'tests/compile_commands.json', \
         'Must contain compile commands.'
     assert config.get_clang_executable() == 'clang', \
-        'Must be path to clang executable.'
+        'Must be path to default clang executable.'
+    assert config.get_clang_tidy_executable() == '~/.local/bin/clang-tidy', \
+        'Must be ~/.local/bin/clang-tidy.'

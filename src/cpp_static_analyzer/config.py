@@ -13,14 +13,17 @@ class Config:
     def default_config(cls):
         """ Default configurations. """
         return {
-            'compile_commands': './compile_commands.json',
+            'compile_commands': 'compile_commands.json',
+            'number_of_jobs': 1,
+            'output_directory': 'out',
+            'error_directory': '',
             'clang': {
                 'executable_path': 'clang',
                 'additional_options': {}
             },
             'clang-tidy': {
                 'executable_path': 'clang-tidy',
-                'config_file_path': './.clang-tidy',
+                'config_file_path': '.clang-tidy',
                 'additional_options': {}
             },
             'path_converters': {},
@@ -60,16 +63,28 @@ class Config:
         self._compile_commands = \
             Config.get_compile_commands_from_config(config)
 
+        self._number_of_jobs = \
+            Config.get_number_of_jobs_from_config(config)
+
+        self._output_directory = \
+            Config.get_output_directory_from_config(config)
+        self._error_directory = \
+            Config.get_error_directory_from_config(config)
+
     def get_path_converters(self):
         """Get path converter."""
         return self._path_converters
 
     def get_clang_tidy_executable(self):
         """Get clang-tidy executable path."""
+        if self._clang_tidy_executable == '':
+            return Config.default_config()['clang-tidy']['executable_path']
         return self._clang_tidy_executable
 
     def get_clang_tidy_config_file(self):
         """Get path to config file."""
+        if self._clang_tidy_config_file == '':
+            return Config.default_config()['clang-tidy']['config_file_path']
         return self._clang_tidy_config_file
 
     def get_clang_tidy_additional_options(self):
@@ -78,27 +93,60 @@ class Config:
 
     def get_compile_commands(self):
         """Get path to compile commands."""
+        if self._compile_commands == '':
+            return Config.default_config()['compile_commands']
         return self._compile_commands
 
     def get_clang_executable(self):
         """Get path to clang executable."""
+        if self._clang_executable == '':
+            return Config.default_config()['clang']['executable_path']
         return self._clang_executable
 
     def get_clang_additional_options(self):
         """Get clang additional options."""
         return self._clang_additional_options
 
+    def get_number_of_jobs(self):
+        """Get number of jobs."""
+        return self._number_of_jobs
+
+    def get_output_directory(self):
+        """Get output directory."""
+        if self._output_directory == '':
+            return Config.default_config()['output_directory']
+        return self._output_directory
+
+    def get_error_directory(self):
+        """Get error directory."""
+        if self._error_directory == '':
+            return Config.default_config()['error_directory']
+        return self._error_directory
+
+    @classmethod
+    def _get_config_file_path(cls, posix_path):
+        config_file_path = os.path.join(posix_path,
+                                        '.cpp-static-analyzer')
+        if os.path.exists(config_file_path):
+            return config_file_path
+        return ''
+
     @classmethod
     def search_for_config_file(cls, path):
         """Search for .cpp-static-analyzer."""
+        if not os.path.exists(path):
+            return ''
         current_path = plib.Path(path)
+        if current_path.is_dir():
+            found_path = cls._get_config_file_path(current_path.as_posix())
+            if found_path != '':
+                return found_path
         if current_path.is_file():
             current_path = current_path.parent
         parents = current_path.parents
         for parent in parents:
-            config_file_path = os.path.join(parent.as_posix(),
-                                            '.cpp-static-analyzer')
-            if os.path.exists(config_file_path):
+            config_file_path = cls._get_config_file_path(parent.as_posix())
+            if config_file_path != '':
                 return config_file_path
         return ''
 
@@ -201,3 +249,28 @@ class Config:
         compile_commands = \
             cls.get_setting_from_config(config, 'compile_commands')
         return compile_commands
+
+    @classmethod
+    def get_number_of_jobs_from_config(cls, config):
+        """Get number of jobs."""
+        number_of_jobs = \
+            cls.get_setting_from_config(config, 'number_of_jobs')
+        try:
+            num_jobs_int = int(number_of_jobs)
+            return max(num_jobs_int, 1)
+        except (ValueError, TypeError):
+            return 1
+
+    @classmethod
+    def get_output_directory_from_config(cls, config):
+        """Get output directory."""
+        output_directory = \
+            cls.get_setting_from_config(config, 'output_directory')
+        return output_directory
+
+    @classmethod
+    def get_error_directory_from_config(cls, config):
+        """Get error directory."""
+        error_directory = \
+            cls.get_setting_from_config(config, 'error_directory')
+        return error_directory

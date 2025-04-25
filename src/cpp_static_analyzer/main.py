@@ -7,7 +7,6 @@ import threading
 import time
 import sys
 import pathlib as plib
-import json
 
 import cpp_static_analyzer.command_manager as cm
 import cpp_static_analyzer.compile_db as cdb
@@ -56,14 +55,15 @@ def _print_progress(command_manager,
         time.sleep(sleep_interval)
 
 
-def _execute_analyzer_threads(compile_commands_json,
-                              config_yaml,
-                              num_of_jobs,
+def _execute_analyzer_threads(arguments,
+                              compile_commands_json,
+                              config,
                               out_dir,
                               err_dir):
     cmd_mgr = cm.CommandManager(compile_commands_json)
     thread_mgr = tm.ThreadManager()
-    config = cfg.Config(config_yaml)
+
+    num_of_jobs = max(arguments.jobs, config.get_number_of_jobs())
 
     job_args = (cmd_mgr, config, out_dir, err_dir)
     for _ in range(num_of_jobs):
@@ -88,35 +88,48 @@ def _execute_analyzer_threads(compile_commands_json,
     return 1
 
 
+def _create_directory(directory):
+    error_code = _check_and_make_directory(directory)
+
+    if error_code < 0:
+        con.error(f'{directory} must be a directory.')
+
+    return error_code
+
+
 def _execute_analyzer(arguments) -> int:
-    out_dir = plib.Path(arguments.output_dir).as_posix()
-    err_dir = out_dir + '/errors'
+    config_yaml = arguments.configuration_file
+    config = cfg.Config(config_yaml)
+
+    output_directory = arguments.output_directory
+    if output_directory == '':
+        output_directory = config.get_output_directory()
+    out_dir = plib.Path(output_directory).as_posix()
 
     # Check output directory.
-    error_code = _check_and_make_directory(out_dir)
-    if error_code < 0:
-        con.error(f'Output {out_dir} must be a directory.')
-        return -1
-
+    error_code = _create_directory(out_dir)
     if error_code == 0:
         con.trace(f'Using existing {out_dir} as output directory.')
 
-    # Check error directory.
-    error_code = _check_and_make_directory(err_dir)
-    if error_code < 0:
-        con.error(f'Error {err_dir} must be a directory.')
-        return -1
+    error_directory = arguments.error_directory
+    if error_directory == '':
+        error_directory = config.get_error_directory()
+    err_dir = error_directory
+    if err_dir == '':
+        err_dir = out_dir + '/errors'
 
-    if error_code == 1:
+    # Check error directory.
+    error_code = _create_directory(err_dir)
+    if error_code == 0:
         con.trace(f'Using existing {err_dir} as error directory.')
 
-    compile_commands_json = arguments.input_file
-    config_yaml = arguments.config_file
-    num_of_jobs = arguments.jobs
+    compile_commands_json = arguments.compile_commands
+    if compile_commands_json == '':
+        compile_commands_json = config.get_compile_commands()
 
-    return _execute_analyzer_threads(compile_commands_json,
-                                     config_yaml,
-                                     num_of_jobs,
+    return _execute_analyzer_threads(arguments,
+                                     compile_commands_json,
+                                     config,
                                      out_dir,
                                      err_dir)
 
@@ -157,35 +170,6 @@ def _process_commands(commands, config):
     return compile_commands
 
 
-def _execute_dump_compile_commands(arguments) -> int:
-    compile_commands_json = arguments.input_file
-    commands = cdb.load_compile_commands(compile_commands_json)
-
-    config_yaml = arguments.config_file
-    config = cfg.Config(config_yaml)
-
-    compile_commands = _process_commands(commands, config)
-
-    dump_compile_commands = arguments.dump_compile_commands
-    con.error(f'Dumping compile commands to {dump_compile_commands}.')
-
-    try:
-        with open(dump_compile_commands, 'w', encoding='utf-8') as output_file:
-            print(json.dumps(compile_commands, indent=2), file=output_file)
-
-    except (FileNotFoundError, PermissionError) as e:
-        con.trace('Error opening file.')
-        con.error(f'Error: {e}.')
-        return -3
-
-    except (IOError, OSError) as e:
-        con.trace('Error writing file.')
-        con.error(f'Error: {e}.')
-        return -2
-
-    return 0
-
-
 def _execute_dump_configurations() -> int:
     """ Dump configurations. """
     cfg.Config.write_default_config_to_stdout()
@@ -194,10 +178,13 @@ def _execute_dump_configurations() -> int:
 
 def main(arguments) -> int:
     """ Main function. """
-    dump_compile_commands = arguments.dump_compile_commands
+    if arguments.dump_configurations:
+        return _execute_dump_configurations()
 
-    if dump_compile_commands != '':
-        return _execute_dump_compile_commands(arguments)
+    # Search for YAML file.
+    if arguments.configuration_file == '':
+        arguments.configuration_file = \
+            cfg.Config.search_for_config_file(os.getcwd())
 
     return _execute_analyzer(arguments)
 
@@ -220,20 +207,25 @@ def execute():
     using clang-tidy.')
 
     # Dump configurations.
-    parser.add_argument('-dc', '--dump-configurations',
+    parser.add_argument('-dc', '--dump_configurations',
                         help='Print configurations to console.',
                         action='store_true')
     # Absolute path to YAML configuration file.
-    parser.add_argument('-cfg', '--configuration-file',
+    parser.add_argument('-cfg', '--configuration_file',
                         type=lambda
                         file_path: _check_file(file_path, parser,
                                                'Configuration file'),
                         help='Path YAML configuration file.',
                         default='')
     # Set output directory for writing results.
-    parser.add_argument('-o', '--output-dir',
+    parser.add_argument('-o', '--output_directory',
                         type=str,
                         help='Output directory.',
+                        default='')
+    # Set output directory for writing results.
+    parser.add_argument('-err', '--error_directory',
+                        type=str,
+                        help='Error directory.',
                         default='')
     # Specify number of jobs to run static analyzer.
     parser.add_argument('-j', '--jobs',
@@ -241,7 +233,7 @@ def execute():
                         help='Number of jobs.',
                         default=1)
     # Path to compile_commands.json.
-    parser.add_argument('-cdb', '--compile-commands',
+    parser.add_argument('-cdb', '--compile_commands',
                         type=str,
                         help='Path to compile_commands.json.',
                         default='')
@@ -252,11 +244,11 @@ def execute():
                         2: Output debug logs.',
                         default=1)
     # Analyze single file.
-    parser.add_argument('-f', '--input-file',
+    parser.add_argument('-f', '--input_file',
                         type=lambda
                         file_path: _check_file(file_path, parser,
                                                'Input file.'),
-                        help='File to analyze.',
+                        help='Single file to analyze.',
                         default='')
 
     args = parser.parse_args()
@@ -268,13 +260,6 @@ def execute():
         con.set_debug(con.DebugFlag.DEBUG)
     else:
         con.set_debug(con.DebugFlag.INFO)
-
-    if args.dump_configurations:
-        sys.exit(_execute_dump_configurations())
-
-    # Search for YAML file.
-    if args.input_file == '' and args.config_file == '':
-        args.config_file = cfg.Config.search_for_config_file(os.getcwd())
 
     # Execute main function and return exit code to system.
     sys.exit(main(arguments=args))
