@@ -237,6 +237,11 @@ def execute():
                         type=str,
                         help='Path to compile_commands.json.',
                         default='')
+    # Path to pickle file.
+    parser.add_argument('-pkl', '--compile_commands_pkl',
+                        type=str,
+                        help='Path to compile commands PKL file.'
+                        default='')
     # Set logging verbosity.
     parser.add_argument('-v', '--verbosity',
                         type=int,

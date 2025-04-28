@@ -14,6 +14,7 @@ class Config:
         """ Default configurations. """
         return {
             'compile_commands': 'compile_commands.json',
+            'compile_commands_pkl': '',
             'number_of_jobs': 1,
             'output_directory': 'out',
             'error_directory': '',
@@ -62,6 +63,8 @@ class Config:
 
         self._compile_commands = \
             Config.get_compile_commands_from_config(config)
+        self._compile_commands_pkl = \
+            Config.get_compile_commands_pkl_from_config(config)
 
         self._number_of_jobs = \
             Config.get_number_of_jobs_from_config(config)
@@ -96,6 +99,12 @@ class Config:
         if self._compile_commands == '':
             return Config.default_config()['compile_commands']
         return self._compile_commands
+
+    def get_compile_commands_pkl(self):
+        """Get path to compile commands PKL."""
+        if self._compile_commands_pkl == '':
+            return Config.default_config()['compile_commands_pkl']
+        return self._compile_commands_pkl
 
     def get_clang_executable(self):
         """Get path to clang executable."""
@@ -274,3 +283,10 @@ class Config:
         error_directory = \
             cls.get_setting_from_config(config, 'error_directory')
         return error_directory
+
+    @classmethod
+    def get_compile_commands_pkl_from_config(cls, config):
+        """Get path to compile commands PKL file."""
+        compile_commands = \
+            cls.get_setting_from_config(config, 'compile_commands_pkl')
+        return compile_commands

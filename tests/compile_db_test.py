@@ -71,13 +71,15 @@ def fixture_compile_command():
 
 def test_command_parser(compile_commands_json):
     """Testing command parser."""
-    command_list = cdb.get_command(compile_commands_json[0])
+    command_list = \
+        cdb.Entry.get_command_from_dictionary(compile_commands_json[0])
     assert len(command_list) == 9, 'Must find 9 commands.'
 
 
 def test_argument_parser(compile_commands_json):
     """Testing argument parser."""
-    argument_list = cdb.get_arguments(compile_commands_json[1])
+    argument_list = \
+        cdb.Entry.get_arguments_from_dictionary(compile_commands_json[1])
     assert len(argument_list) == 9, 'Must find 9 arguments.'
 
 
@@ -96,8 +98,10 @@ def test_entry_conversion(compile_commands_json):
         assert cmd_argument == argument, \
             f'Argument: {cmd_argument} != {argument}'
 
-    assert cmd_entry.get_input_path() == args_entry.get_input_path(), 'Wrong input file.'
-    assert cmd_entry.get_output_path() == args_entry.get_output_path(), 'Wrong output file.'
+    assert cmd_entry.get_input_path() == args_entry.get_input_path(), \
+        'Wrong input file.'
+    assert cmd_entry.get_output_path() == args_entry.get_output_path(), \
+        'Wrong output file.'
 
 
 def test_path_converter(compile_commands_json, path_converter):
@@ -107,7 +111,7 @@ def test_path_converter(compile_commands_json, path_converter):
     results = []
 
     for arg_str in arg_strs:
-        result = cdb.convert_path(arg_str, path_converter)
+        result = cdb.Entry.convert_path(arg_str, path_converter)
         results.append(result)
 
     path_conversion_results = [
@@ -136,7 +140,7 @@ def test_empty_path_converter(compile_commands_json, empty_path_converter):
     results = []
 
     for arg_str in arg_strs:
-        result = cdb.convert_path(arg_str, empty_path_converter)
+        result = cdb.Entry.convert_path(arg_str, empty_path_converter)
         results.append(result)
 
     path_conversion_results = [

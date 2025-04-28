@@ -9,52 +9,19 @@ import cpp_static_analyzer.compile_db as cdb
 import cpp_static_analyzer.config as cfg
 
 
-def _execute_clang_tidy(command, config: cfg.Config) -> tuple:
-    """Execute clang-tidy."""
-    entry = cdb.Entry(command)
-
-    # Compose command line for clang-tidy.
-    exec_cmd = []
-
-    exec_cmd.append(config.get_clang_tidy_executable())
-    exec_cmd.append('--quiet')
-
-    for additional_option in config.get_clang_tidy_additional_options():
-        exec_cmd.append(additional_option)
-
-    input_path = entry.get_input_path()
-    path_converters = config.get_path_converters()
-    conv_input_path = cdb.convert_path(input_path,
-                                       path_converters)
-    exec_cmd.append(f'{conv_input_path}')
-
-    exec_cmd.append('--')
-
-    arguments = entry.get_arguments()
-    for arg in arguments:
-        conv_str = cdb.convert_path(arg, path_converters)
-        exec_cmd.append(conv_str)
-
-    proc = sproc.run(exec_cmd,
-                     encoding='utf-8',
-                     shell=False,
-                     stdout=sproc.PIPE,
-                     stderr=sproc.PIPE,
-                     universal_newlines=True,
-                     text=True,
-                     check=True)
-
-    return entry, proc.stdout, proc.stderr
-
-
 class CommandManager:
     """Command manager object."""
 
     def __init__(self, path: str):
-        self._commands = cdb.load_compile_commands(path)
+        self._commands = cdb.Entry.load_compile_commands(path)
         self._command_count = len(self._commands)
         self._lock = threading.Lock()
         self._current_index = 0
+
+        self._command_hashmap = {}
+        for command in self._commands:
+            file_name_only = os.path.splitext(command['file'])[0]
+            self._command_hashmap[file_name_only] = command
 
     def next_index(self):
         """Next index."""
@@ -80,9 +47,14 @@ class CommandManager:
         return self._current_index
 
     def _write_to_file(self, content, file_path):
+        """Write to file."""
         if len(content) > 0:
             with open(file_path, 'w', encoding="utf-8") as output_file:
                 print(content, file=output_file)
+
+    def get_command_hashmap(self):
+        """Get command hashmap."""
+        return self._command_hashmap
 
     def job(self,
             config: cfg.Config,
@@ -93,7 +65,8 @@ class CommandManager:
         while index >= 0:
             command = self[index]
 
-            entry, result, error = _execute_clang_tidy(command, config)
+            entry, result, error = \
+                CommandManager.execute_clang_tidy(command, config)
 
             input_path = entry.get_input_path()
             file_name = os.path.basename(input_path)
@@ -106,3 +79,41 @@ class CommandManager:
             self._write_to_file(error, error_file_path)
 
             index = self.next_index()
+
+    @classmethod
+    def execute_clang_tidy(cls, command, config: cfg.Config) -> tuple:
+        """Execute clang-tidy."""
+        entry = cdb.Entry(command)
+
+        # Compose command line for clang-tidy.
+        exec_cmd = []
+
+        exec_cmd.append(config.get_clang_tidy_executable())
+        exec_cmd.append('--quiet')
+
+        for additional_option in config.get_clang_tidy_additional_options():
+            exec_cmd.append(additional_option)
+
+        input_path = entry.get_input_path()
+        path_converters = config.get_path_converters()
+        conv_input_path = cdb.convert_path(input_path,
+                                           path_converters)
+        exec_cmd.append(f'{conv_input_path}')
+
+        exec_cmd.append('--')
+
+        arguments = entry.get_arguments()
+        for arg in arguments:
+            conv_str = cdb.convert_path(arg, path_converters)
+            exec_cmd.append(conv_str)
+
+        proc = sproc.run(exec_cmd,
+                         encoding='utf-8',
+                         shell=False,
+                         stdout=sproc.PIPE,
+                         stderr=sproc.PIPE,
+                         universal_newlines=True,
+                         text=True,
+                         check=True)
+
+        return entry, proc.stdout, proc.stderr
