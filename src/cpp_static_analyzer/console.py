@@ -12,34 +12,36 @@ class DebugFlag(Enum):
     DEBUG = 2
 
 
-class ConsoleFlags:
+class _ConsoleFlags:
     """Console flags."""
     _debug_flag = DebugFlag.INFO
 
-    def set_debug_flag(self, debug_flag: DebugFlag):
+    @classmethod
+    def set_debug_flag(cls, debug_flag: DebugFlag):
         """Set debug flag."""
-        ConsoleFlags._debug_flag = debug_flag
+        cls._debug_flag = debug_flag
 
-    def get_debug_flag(self):
+    @classmethod
+    def get_debug_flag(cls):
         """Get debug flag."""
-        return ConsoleFlags._debug_flag
+        return cls._debug_flag
 
 
 def set_debug(flag: DebugFlag):
     """Set debug flag."""
-    ConsoleFlags().set_debug_flag(flag)
+    _ConsoleFlags.set_debug_flag(flag)
 
 
 def trace(*args, **kwargs):
     """Trace."""
-    if ConsoleFlags().get_debug_flag() in (DebugFlag.QUIET, DebugFlag.INFO):
+    if _ConsoleFlags.get_debug_flag() in (DebugFlag.QUIET, DebugFlag.INFO):
         return
     print(*args, file=sys.stderr, **kwargs)
 
 
 def error(*args, **kwargs):
     """Error message."""
-    if ConsoleFlags().get_debug_flag() == DebugFlag.QUIET:
+    if _ConsoleFlags.get_debug_flag() == DebugFlag.QUIET:
         return
     print(*args, file=sys.stderr, **kwargs)
 

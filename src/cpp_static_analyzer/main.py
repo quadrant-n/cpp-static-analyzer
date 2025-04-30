@@ -9,7 +9,6 @@ import sys
 import pathlib as plib
 
 import cpp_static_analyzer.command_manager as cm
-import cpp_static_analyzer.compile_db as cdb
 import cpp_static_analyzer.thread_manager as tm
 import cpp_static_analyzer.config as cfg
 import cpp_static_analyzer.console as con
@@ -56,16 +55,14 @@ def _print_progress(command_manager,
 
 
 def _execute_analyzer_threads(arguments,
-                              compile_commands_json,
+                              command_manager,
                               config,
                               out_dir,
                               err_dir):
-    cmd_mgr = cm.CommandManager(compile_commands_json)
     thread_mgr = tm.ThreadManager()
-
     num_of_jobs = max(arguments.jobs, config.get_number_of_jobs())
 
-    job_args = (cmd_mgr, config, out_dir, err_dir)
+    job_args = (command_manager, config, out_dir, err_dir)
     for _ in range(num_of_jobs):
         thread_mgr.add_thread(threading.Thread(target=cm.CommandManager.job,
                                                args=job_args))
@@ -73,14 +70,14 @@ def _execute_analyzer_threads(arguments,
     thread_mgr.start_all_threads()
 
     # Print progress.
-    last_idx = len(cmd_mgr)
+    last_idx = len(command_manager)
 
-    _print_progress(cmd_mgr, last_idx, 0.5)
+    _print_progress(command_manager, last_idx, 0.5)
 
     thread_mgr.join_all_threads()
     thread_mgr.remove_all_threads()
 
-    if last_idx == cmd_mgr.get_current_index():
+    if last_idx == command_manager.get_current_index():
         con.error('All commands processed successfully!')
         return 0
 
@@ -95,6 +92,20 @@ def _create_directory(directory):
         con.error(f'{directory} must be a directory.')
 
     return error_code
+
+
+def _create_command_manager(arguments, config):
+    compile_commands_pkl = arguments.compile_commands_pkl
+    if compile_commands_pkl == '':
+        compile_commands_pkl = config.get_compile_commands_pkl()
+
+    if compile_commands_pkl == '':
+        compile_commands_json = arguments.compile_commands
+        if compile_commands_json == '':
+            compile_commands_json = config.get_compile_commands()
+        return cm.CommandManager.create_from_json(compile_commands_json)
+
+    return cm.CommandManager.create_from_pkl(compile_commands_pkl)
 
 
 def _execute_analyzer(arguments) -> int:
@@ -123,51 +134,18 @@ def _execute_analyzer(arguments) -> int:
     if error_code == 0:
         con.trace(f'Using existing {err_dir} as error directory.')
 
-    compile_commands_json = arguments.compile_commands
-    if compile_commands_json == '':
-        compile_commands_json = config.get_compile_commands()
+    command_manager = _create_command_manager(arguments, config)
+
+    if arguments.export_to_pkl != '':
+        command_manager.export_to_pkl(arguments.export_to_pkl)
+        con.trace(f'Compile commands exported to {arguments.export_to_pkl}.')
+        return 0
 
     return _execute_analyzer_threads(arguments,
-                                     compile_commands_json,
+                                     command_manager,
                                      config,
                                      out_dir,
                                      err_dir)
-
-
-def _process_commands(commands, config):
-    compile_commands = []
-    for command in commands:
-        entry = cdb.Entry(command)
-        entry_dict = {}
-
-        directory = entry.get_directory()
-        path_converter = config.get_path_converter()
-
-        entry_dict['directory'] = cdb.Entry.convert_path(directory,
-                                                         path_converter)
-
-        command_str = ''
-        arguments = entry.get_arguments()
-        for arg in arguments:
-            if command_str != '':
-                command_str += ' '
-            command_str += cdb.Entry.convert_path(arg, path_converter)
-
-        entry_dict['command'] = command_str
-
-        input_path = entry.get_input_path()
-        if input_path != '':
-            entry_dict['file'] = cdb.Entry.convert_path(input_path,
-                                                        path_converter)
-
-        output_path = entry.get_output_path()
-        if output_path != '':
-            entry_dict['output'] = cdb.Entry.convert_path(output_path,
-                                                          path_converter)
-
-        compile_commands.append(entry_dict)
-
-    return compile_commands
 
 
 def _execute_dump_configurations() -> int:
@@ -180,7 +158,6 @@ def main(arguments) -> int:
     """ Main function. """
     if arguments.dump_configurations:
         return _execute_dump_configurations()
-
     # Search for YAML file.
     if arguments.configuration_file == '':
         arguments.configuration_file = \
@@ -189,10 +166,11 @@ def main(arguments) -> int:
     return _execute_analyzer(arguments)
 
 
-def _check_file(path, parser, arg: str):
+def _check_file(path, parser, arg: str, allow_empty=False):
     """ Check if a file exist at specific path. """
     if path == '':
-        con.trace(f'{arg}: No available path.')
+        if not allow_empty:
+            con.trace(f'{arg}: No available path.')
         return ''
     if not fpath.isfile(path):
         con.trace('File check failed.')
@@ -210,6 +188,13 @@ def execute():
     parser.add_argument('-dc', '--dump_configurations',
                         help='Print configurations to console.',
                         action='store_true')
+
+    # Export compile commands.
+    parser.add_argument('-exp', '--export_to_pkl',
+                        type=str,
+                        help='Export to pickle.',
+                        default='')
+
     # Absolute path to YAML configuration file.
     parser.add_argument('-cfg', '--configuration_file',
                         type=lambda
@@ -234,12 +219,18 @@ def execute():
                         default=1)
     # Path to compile_commands.json.
     parser.add_argument('-cdb', '--compile_commands',
-                        type=str,
+                        type=lambda
+                        file_path: _check_file(file_path, parser,
+                                               'Compile commands',
+                                               True),
                         help='Path to compile_commands.json.',
                         default='')
     # Path to pickle file.
     parser.add_argument('-pkl', '--compile_commands_pkl',
-                        type=str,
+                        type=lambda
+                        file_path: _check_file(file_path, parser,
+                                               'Compile commands',
+                                               True),
                         help='Path to compile commands PKL file.',
                         default='')
     # Set logging verbosity.
@@ -252,7 +243,8 @@ def execute():
     parser.add_argument('-f', '--input_file',
                         type=lambda
                         file_path: _check_file(file_path, parser,
-                                               'Input file.'),
+                                               'Input file.',
+                                               True),
                         help='Single file to analyze.',
                         default='')
 

@@ -19,9 +19,20 @@ def fixture_file_names():
             '/home/llama.cpp/ggml-backend.c']
 
 
+@pytest.fixture(name='pkl_file_name')
+def fixture_pkl_file_name():
+    return 'tests/out/compile_commands.pkl'
+
+
+@pytest.fixture(name='compile_commands_pkl')
+def fixture_compile_commands_pkl():
+    """Fixture for compile_commands.pkl."""
+    return 'tests/compile_commands.pkl'
+
+
 def test_command_manager(compile_commands_json):
     """Testing command manager."""
-    cmd_mgr = cm.CommandManager(compile_commands_json)
+    cmd_mgr = cm.CommandManager.create_from_json(compile_commands_json)
     assert len(cmd_mgr) == 3, 'Must have four commands.'
 
     ii = cmd_mgr.next_index()
@@ -39,7 +50,7 @@ def test_command_manager(compile_commands_json):
 
 def test_command_hashmap(compile_commands_json, file_names):
     """Testing command hashmap."""
-    cmd_mgr = cm.CommandManager(compile_commands_json)
+    cmd_mgr = cm.CommandManager.create_from_json(compile_commands_json)
     command_hashmap = cmd_mgr.get_command_hashmap()
     assert len(command_hashmap) == len(file_names), 'Must have four commands.'
 
@@ -52,3 +63,16 @@ def test_command_hashmap(compile_commands_json, file_names):
         assert 'file' in command, 'Must have file.'
         assert 'output' in command, 'Must have output.'
         assert 'command' in command, 'Must have command.'
+
+
+def test_export_to_pickle(compile_commands_json, pkl_file_name):
+    """Export data to pickle."""
+    cmd_mgr = cm.CommandManager.create_from_json(compile_commands_json)
+    error_code = cmd_mgr.export_to_pkl(pkl_file_name)
+    assert error_code == 0, f'Error exporting to {pkl_file_name}'
+
+
+def test_import_from_pickle(compile_commands_pkl):
+    """Import from pickle."""
+    cmd_mgr = cm.CommandManager.create_from_pkl(compile_commands_pkl)
+    assert len(cmd_mgr) == 3, 'Must import 3 entries.'

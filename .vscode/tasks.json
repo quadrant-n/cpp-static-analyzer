@@ -65,17 +65,6 @@
                 ".venv/bin/python",
             ],
             "problemMatcher": []
-        },
-        {
-            "label": "Use virtual environment",
-            "type": "shell",
-            "command": "poetry",
-            "args": [
-                "env",
-                "use",
-                ".venv/bin/python",
-            ],
-            "problemMatcher": []
         }
     ]
 }
