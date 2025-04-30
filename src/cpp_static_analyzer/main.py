@@ -143,27 +143,27 @@ def _process_commands(commands, config):
         directory = entry.get_directory()
         path_converter = config.get_path_converter()
 
-        entry_dict['directory'] = cdb.convert_path(directory,
-                                                   path_converter)
+        entry_dict['directory'] = cdb.Entry.convert_path(directory,
+                                                         path_converter)
 
         command_str = ''
         arguments = entry.get_arguments()
         for arg in arguments:
             if command_str != '':
                 command_str += ' '
-            command_str += cdb.convert_path(arg, path_converter)
+            command_str += cdb.Entry.convert_path(arg, path_converter)
 
         entry_dict['command'] = command_str
 
         input_path = entry.get_input_path()
         if input_path != '':
-            entry_dict['file'] = cdb.convert_path(input_path,
-                                                  path_converter)
+            entry_dict['file'] = cdb.Entry.convert_path(input_path,
+                                                        path_converter)
 
         output_path = entry.get_output_path()
         if output_path != '':
-            entry_dict['output'] = cdb.convert_path(output_path,
-                                                    path_converter)
+            entry_dict['output'] = cdb.Entry.convert_path(output_path,
+                                                          path_converter)
 
         compile_commands.append(entry_dict)
 
@@ -240,7 +240,7 @@ def execute():
     # Path to pickle file.
     parser.add_argument('-pkl', '--compile_commands_pkl',
                         type=str,
-                        help='Path to compile commands PKL file.'
+                        help='Path to compile commands PKL file.',
                         default='')
     # Set logging verbosity.
     parser.add_argument('-v', '--verbosity',

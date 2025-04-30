@@ -96,15 +96,14 @@ class CommandManager:
 
         input_path = entry.get_input_path()
         path_converters = config.get_path_converters()
-        conv_input_path = cdb.convert_path(input_path,
-                                           path_converters)
+        conv_input_path = cdb.Entry.convert_path(input_path, path_converters)
         exec_cmd.append(f'{conv_input_path}')
 
         exec_cmd.append('--')
 
         arguments = entry.get_arguments()
         for arg in arguments:
-            conv_str = cdb.convert_path(arg, path_converters)
+            conv_str = cdb.Entry.convert_path(arg, path_converters)
             exec_cmd.append(conv_str)
 
         proc = sproc.run(exec_cmd,
