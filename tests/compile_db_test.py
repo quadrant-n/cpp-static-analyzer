@@ -39,21 +39,6 @@ def fixture_compile_commands_json():
     return json.loads(cdb_json)
 
 
-@pytest.fixture(name='path_converter')
-def fixture_path_converter():
-    """Converting paths."""
-    return {
-        '/Users/nus/test': '/home/test',
-        '/Users/nus/build': '/home/build'
-    }
-
-
-@pytest.fixture(name='empty_path_converter')
-def fixture_empty_path_converter():
-    """Empty path coverter, no path will be converted."""
-    return {}
-
-
 @pytest.fixture(name='compile_command')
 def fixture_compile_command():
     """Simple compile command."""
@@ -102,61 +87,3 @@ def test_entry_conversion(compile_commands_json):
         'Wrong input file.'
     assert cmd_entry.get_output_path() == args_entry.get_output_path(), \
         'Wrong output file.'
-
-
-def test_path_converter(compile_commands_json, path_converter):
-    """Testing path converter."""
-    args = compile_commands_json[1]
-    arg_strs = args['arguments']
-    results = []
-
-    for arg_str in arg_strs:
-        result = cdb.Entry.convert_path(arg_str, path_converter)
-        results.append(result)
-
-    path_conversion_results = [
-        '/usr/bin/c++',
-        '-I/home/test/include/.',
-        '-I\"/home/test/include path/.\"',
-        '-O3',
-        '-DNDEBUG',
-        '-o',
-        '/home/build/test.cpp.o',
-        '-c',
-        '/home/test.cpp'
-    ]
-
-    assert len(results) == len(path_conversion_results), 'Wrong result count.'
-
-    for (result, conv_result) in zip(results, path_conversion_results):
-        assert result == conv_result, \
-            f'Argument {conv_result} must be {result}'
-
-
-def test_empty_path_converter(compile_commands_json, empty_path_converter):
-    """Testing empty path converter."""
-    args = compile_commands_json[1]
-    arg_strs = args['arguments']
-    results = []
-
-    for arg_str in arg_strs:
-        result = cdb.Entry.convert_path(arg_str, empty_path_converter)
-        results.append(result)
-
-    path_conversion_results = [
-        '/usr/bin/c++',
-        '-I/Users/nus/test/include/.',
-        '-I\"/Users/nus/test/include path/.\"',
-        '-O3',
-        '-DNDEBUG',
-        '-o',
-        '/Users/nus/build/test.cpp.o',
-        '-c',
-        '/Users/nus/test.cpp'
-    ]
-
-    assert len(results) == len(path_conversion_results), 'Wrong result count.'
-
-    for (result, conv_result) in zip(results, path_conversion_results):
-        assert result == conv_result, \
-            f'Argument {result} must be unchanged. Result: {conv_result}.'

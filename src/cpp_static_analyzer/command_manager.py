@@ -5,6 +5,7 @@ import threading
 import os.path
 import hashlib
 import pickle
+import sys
 
 import cpp_static_analyzer.compile_db as cdb
 import cpp_static_analyzer.config as cfg
@@ -119,6 +120,25 @@ class CommandManager:
 
             index = self.next_index()
 
+    def analyze(self, config: cfg.Config, file_path: str):
+        """Analyze single path."""
+        file_name_without_ext = os.path.splitext(file_path)
+
+        if file_name_without_ext[0] in self._command_hashmap:
+            command = self._command_hashmap[file_name_without_ext[0]]
+            _, result, error = \
+                CommandManager.execute_clang_tidy(command,
+                                                  config,
+                                                  file_path)
+
+            sys.stdout.write(result)
+            sys.stderr.write(error)
+
+            return 0
+
+        con.error(f'No entry found for {file_path}.')
+        return -1
+
     def export_to_pkl(self, file_path: str) -> int:
         """Export to PKL file."""
         try:
@@ -133,7 +153,8 @@ class CommandManager:
         return 0
 
     @classmethod
-    def execute_clang_tidy(cls, command, config: cfg.Config) -> tuple:
+    def execute_clang_tidy(cls, command, config: cfg.Config,
+                           override_input_path='') -> tuple:
         """Execute clang-tidy."""
         entry = cdb.Entry(command)
 
@@ -142,21 +163,24 @@ class CommandManager:
 
         exec_cmd.append(config.get_clang_tidy_executable())
         exec_cmd.append('--quiet')
+        exec_cmd.append(f'--config-file={config.get_clang_tidy_config_file()}')
+        exec_cmd.append('-p')
+        exec_cmd.append(config.get_compile_commands())
 
         for additional_option in config.get_clang_tidy_additional_options():
             exec_cmd.append(additional_option)
 
-        input_path = entry.get_input_path()
-        path_converters = config.get_path_converters()
-        conv_input_path = cdb.Entry.convert_path(input_path, path_converters)
-        exec_cmd.append(f'{conv_input_path}')
+        input_path = override_input_path
+        if input_path == '':
+            input_path = entry.get_input_path()
+
+        exec_cmd.append(input_path)
 
         exec_cmd.append('--')
 
         arguments = entry.get_arguments()
         for arg in arguments:
-            conv_str = cdb.Entry.convert_path(arg, path_converters)
-            exec_cmd.append(conv_str)
+            exec_cmd.append(arg)
 
         proc = sproc.run(exec_cmd,
                          encoding='utf-8',
@@ -165,6 +189,6 @@ class CommandManager:
                          stderr=sproc.PIPE,
                          universal_newlines=True,
                          text=True,
-                         check=True)
+                         check=False)
 
         return entry, proc.stdout, proc.stderr

@@ -54,11 +54,19 @@ def _print_progress(command_manager,
         time.sleep(sleep_interval)
 
 
+def _analyze_single_file(arguments, command_manager, config):
+    input_file = os.path.abspath(arguments.input_file)
+    con.trace(f'Analyzing {input_file}')
+    return command_manager.analyze(config, input_file)
+
+
 def _execute_analyzer_threads(arguments,
                               command_manager,
                               config,
                               out_dir,
                               err_dir):
+    con.trace('Executing multi-thread static analyzer.')
+
     thread_mgr = tm.ThreadManager()
     num_of_jobs = max(arguments.jobs, config.get_number_of_jobs())
 
@@ -108,10 +116,7 @@ def _create_command_manager(arguments, config):
     return cm.CommandManager.create_from_pkl(compile_commands_pkl)
 
 
-def _execute_analyzer(arguments) -> int:
-    config_yaml = arguments.configuration_file
-    config = cfg.Config(config_yaml)
-
+def _check_directories(arguments, config):
     output_directory = arguments.output_directory
     if output_directory == '':
         output_directory = config.get_output_directory()
@@ -129,10 +134,12 @@ def _execute_analyzer(arguments) -> int:
     if err_dir == '':
         err_dir = out_dir + '/errors'
 
-    # Check error directory.
-    error_code = _create_directory(err_dir)
-    if error_code == 0:
-        con.trace(f'Using existing {err_dir} as error directory.')
+    return out_dir, err_dir
+
+
+def _execute_analyzer(arguments) -> int:
+    config_yaml = arguments.configuration_file
+    config = cfg.Config(config_yaml)
 
     command_manager = _create_command_manager(arguments, config)
 
@@ -141,6 +148,10 @@ def _execute_analyzer(arguments) -> int:
         con.trace(f'Compile commands exported to {arguments.export_to_pkl}.')
         return 0
 
+    if arguments.input_file != '':
+        return _analyze_single_file(arguments, command_manager, config)
+
+    out_dir, err_dir = _check_directories(arguments, config)
     return _execute_analyzer_threads(arguments,
                                      command_manager,
                                      config,

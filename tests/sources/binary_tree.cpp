@@ -3,32 +3,6 @@
 
 #include "binary_tree.h"
 
-int BinaryTree::getMinValueInRightSubtree(Node* node) {
-    if (node == NULL)
-        return INT_MAX;
-
-    int minValue = node->data;
-    Node* current = node;
-
-    while (current->right != NULL) {
-        minValue = std::min(minValue, current->data);
-        current = current->right;
-    }
-
-    return minValue;
-}
-
-void BinaryTree::printInorder(Node* node) {
-    if (node == NULL)
-        return;
-
-    printInorder(node->left);
-
-    std::cout << "Node with value: " << node->data << std::endl;
-
-    printInorder(node->right);
-}
-
 int main() {
     Node* root = new Node(10);
     root->left = new Node(5);
@@ -39,6 +13,7 @@ int main() {
     root->right->right = new Node(25);
     std::cout << "Inorder traversal of the binary tree:" << std::endl;
     BinaryTree btree;
+    // std::cout << "Root node data:" << btree.getRootData() << std::endl;
     btree.setRootNode(root);
     btree.printInorder(root);
     std::cout << "Minimum value in right subtree: " << btree.getMinValueInRightSubtree(root) << std::endl;

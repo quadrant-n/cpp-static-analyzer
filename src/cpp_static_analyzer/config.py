@@ -26,8 +26,7 @@ class Config:
                 'executable_path': 'clang-tidy',
                 'config_file_path': '.clang-tidy',
                 'additional_options': {}
-            },
-            'path_converters': {},
+            }
         }
 
     @classmethod
@@ -45,9 +44,6 @@ class Config:
                 config = Config.load(yaml_file_path)
         else:
             config = yml
-
-        self._path_converters = \
-            Config.get_path_converters_from_config(config)
 
         self._clang_tidy_executable = \
             Config.get_clang_tidy_executable_path_from_config(config)
@@ -73,10 +69,6 @@ class Config:
             Config.get_output_directory_from_config(config)
         self._error_directory = \
             Config.get_error_directory_from_config(config)
-
-    def get_path_converters(self):
-        """Get path converter."""
-        return self._path_converters
 
     def get_clang_tidy_executable(self):
         """Get clang-tidy executable path."""
@@ -172,13 +164,6 @@ class Config:
         except yaml.YAMLError:
             print(f'{yaml_file_path} is invalid.')
             return cls.default_config()
-
-    @classmethod
-    def get_path_converters_from_config(cls, config):
-        """Get path converter settings."""
-        if 'path_converters' in config:
-            return config['path_converters']
-        return cls.default_config()['path_converters']
 
     @classmethod
     def get_clang_tidy_setting_from_config(cls, config, key):

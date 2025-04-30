@@ -113,20 +113,3 @@ class Entry:
         with open(filename, 'r', encoding='utf-8') as f:
             data = json.load(f)
         return data
-
-    @classmethod
-    def convert_path(cls, path: str, converter: dict):
-        """Convert path."""
-        result = path
-        for key, value in converter.items():
-            index = path.find(key)
-            if index >= 0:
-                if index > 0:
-                    sub_str_0 = path[0:index]
-                else:
-                    sub_str_0 = ''
-                sub_str_1 = path[len(key) + index:]
-                result = sub_str_0 + value + sub_str_1
-                break
-
-        return result

@@ -66,25 +66,6 @@ def config_yml_file_path():
     return os.path.join(cwd, 'tests/deep/.cpp-static-analyzer')
 
 
-def test_path_converter(yaml_config):
-    """Testing path converter."""
-    path_converters = cfg.Config.get_path_converters_from_config(yaml_config)
-    assert len(path_converters) == 2, 'Wrong number of paths. Must be 2 paths.'
-
-    for key, value in path_converters.items():
-        if key == '/Users/nus/test':
-            assert value == '/test', f'Value for {key} must be "/test"'
-        elif key == '/Users/nus/build':
-            assert value == '/build', f'Value for {key} must be "/build"'
-
-
-def test_empty_path_converter(yaml_empty_config):
-    """Test empty path converter."""
-    path_converters = \
-        cfg.Config.get_path_converters_from_config(yaml_empty_config)
-    assert len(path_converters) == 0, 'Path converters must be empty.'
-
-
 def test_search_for_config(nested_directory):
     """Finding config.yml on dested directory."""
     config_path = \
@@ -130,8 +111,6 @@ def test_empty_config(yaml_empty_config):
         'Must be empty path string.'
     assert not config.get_clang_tidy_additional_options(), \
         'Must have empty additional options.'
-    assert not config.get_path_converters(), \
-        'Must have empty path converters.'
 
 
 def test_load_config_from_file(yaml_config):

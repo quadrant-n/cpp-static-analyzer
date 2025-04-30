@@ -19,11 +19,36 @@ private:
 public:
     BinaryTree() : root(NULL) {}
 
-    void setRootNode(Node* node) { this->root = node; }
+    void setRootNode(Node* node) { root = node; }
 
-    int getMinValueInRightSubtree(Node* node);
+    int getMinValueInRightSubtree(Node* node) {
+        if (node == NULL) {
+            return INT_MAX;
+        }
 
-    void printInorder(Node* node);
+        int minValue = node->data;
+        Node* current = node;
+
+        while (current->right != NULL) {
+            minValue = std::min(minValue, current->data);
+            current = current->right;
+        }
+
+        return minValue;
+    }
+
+    void printInorder(Node* node) {
+        if (node == NULL) {
+            return;
+        }
+
+        printInorder(node->left);
+
+        std::cout << "Node with value: " << node->data << std::endl;
+
+        printInorder(node->right);
+    }
+
 };
 
 #endif // BINARY_TREE_H
