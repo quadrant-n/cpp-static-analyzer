@@ -5,7 +5,6 @@ import os.path as fpath
 import argparse
 import threading
 import time
-import sys
 import pathlib as plib
 
 import cpp_static_analyzer.command_manager as cm
@@ -147,6 +146,7 @@ def _check_directory_for_clang_diagnostics(config):
     if error_code == 0:
         con.trace(f'Using {diag_dir} as diagnostic directory for clang.')
 
+
 def _create_config(arguments) -> cfg.Config:
     config_yaml = arguments.configuration_file
     config = cfg.Config(config_yaml)
@@ -164,6 +164,7 @@ def _create_config(arguments) -> cfg.Config:
         config.set_clang_enabled(False)
 
     return config
+
 
 def _execute_analyzer(arguments) -> int:
     config = _create_config(arguments)
