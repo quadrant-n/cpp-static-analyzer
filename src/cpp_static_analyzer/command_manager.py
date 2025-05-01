@@ -257,6 +257,12 @@ class CommandManager:
         exec_cmd.append(config.get_clang_executable())
         exec_cmd.append('--analyze')
 
+        diag_dir = config.get_clang_diagnostic_directory()
+        if diag_dir != '':
+            file_name = os.path.basename(entry.get_input_path())
+            exec_cmd.append('-o')
+            exec_cmd.append(f'{diag_dir}/{file_name}')
+
         for additional_option in config.get_clang_tidy_additional_options():
             exec_cmd.append(additional_option)
 

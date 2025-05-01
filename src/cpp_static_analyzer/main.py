@@ -137,6 +137,16 @@ def _check_directories(arguments, config):
     return out_dir, err_dir
 
 
+def _check_directory_for_clang_diagnostics(config):
+    if not config.is_clang_enabled():
+        return
+
+    diag_dir = config.get_clang_diagnostic_directory()
+    diag_dir_posix = plib.Path(diag_dir).as_posix()
+    error_code = _create_directory(diag_dir_posix)
+    if error_code == 0:
+        con.trace(f'Using {diag_dir} as diagnostic directory for clang.')
+
 def _create_config(arguments) -> cfg.Config:
     config_yaml = arguments.configuration_file
     config = cfg.Config(config_yaml)
@@ -165,10 +175,13 @@ def _execute_analyzer(arguments) -> int:
         con.trace(f'Compile commands exported to {arguments.export_to_pkl}.')
         return 0
 
+    _check_directory_for_clang_diagnostics(config)
+
     if arguments.input_file != '':
         return _analyze_single_file(arguments, command_manager, config)
 
     out_dir, err_dir = _check_directories(arguments, config)
+
     return _execute_analyzer_threads(arguments,
                                      command_manager,
                                      config,

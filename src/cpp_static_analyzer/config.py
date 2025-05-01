@@ -21,7 +21,8 @@ class Config:
             'clang': {
                 'enabled': True,
                 'executable_path': 'clang++',
-                'additional_options': {}
+                'additional_options': {},
+                'diagnostic_directory': ''
             },
             'clang-tidy': {
                 'enabled': True,
@@ -62,6 +63,8 @@ class Config:
             Config.get_clang_additional_options_from_config(config)
         self._clang_enabled = \
             Config.get_clang_enabled_from_config(config)
+        self._clang_diagnostic_directory = \
+            Config.get_clang_diagnostic_directory_from_config(config)
 
         self._compile_commands = \
             Config.get_compile_commands_from_config(config)
@@ -78,14 +81,10 @@ class Config:
 
     def get_clang_tidy_executable(self):
         """Get clang-tidy executable path."""
-        if self._clang_tidy_executable == '':
-            return Config.default_config()['clang-tidy']['executable_path']
         return self._clang_tidy_executable
 
     def get_clang_tidy_config_file(self):
         """Get path to config file."""
-        if self._clang_tidy_config_file == '':
-            return Config.default_config()['clang-tidy']['config_file_path']
         return self._clang_tidy_config_file
 
     def get_clang_tidy_additional_options(self):
@@ -102,20 +101,14 @@ class Config:
 
     def get_compile_commands(self):
         """Get path to compile commands."""
-        if self._compile_commands == '':
-            return Config.default_config()['compile_commands']
         return self._compile_commands
 
     def get_compile_commands_pkl(self):
         """Get path to compile commands PKL."""
-        if self._compile_commands_pkl == '':
-            return Config.default_config()['compile_commands_pkl']
         return self._compile_commands_pkl
 
     def get_clang_executable(self):
         """Get path to clang executable."""
-        if self._clang_executable == '':
-            return Config.default_config()['clang']['executable_path']
         return self._clang_executable
 
     def get_clang_additional_options(self):
@@ -130,20 +123,20 @@ class Config:
         """Set clang enabled."""
         self._clang_enabled = enabled
 
+    def get_clang_diagnostic_directory(self):
+        """Get path to plist directory."""
+        return self._clang_diagnostic_directory
+
     def get_number_of_jobs(self):
         """Get number of jobs."""
         return self._number_of_jobs
 
     def get_output_directory(self):
         """Get output directory."""
-        if self._output_directory == '':
-            return Config.default_config()['output_directory']
         return self._output_directory
 
     def get_error_directory(self):
         """Get error directory."""
-        if self._error_directory == '':
-            return Config.default_config()['error_directory']
         return self._error_directory
 
     @classmethod
@@ -268,10 +261,19 @@ class Config:
 
     @classmethod
     def get_clang_enabled_from_config(cls, config):
+        """"""
         enabled = \
             cls.get_clang_setting_from_config(config,
                                               'enabled')
         return enabled
+
+    @classmethod
+    def get_clang_diagnostic_directory_from_config(cls, config):
+        """Get path to diagnostic directory."""
+        diagnostic_directory = \
+            cls.get_clang_setting_from_config(config,
+                                              'diagnostic_directory')
+        return diagnostic_directory
 
     @classmethod
     def get_compile_commands_from_config(cls, config):

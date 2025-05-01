@@ -2,6 +2,7 @@ clang:
   additional_options: {}
   executable_path: clang++
   enabled: true
+  diagnostic_directory: 'diag'
 clang-tidy:
   additional_options: {}
   config_file_path: sources/.clang-tidy
