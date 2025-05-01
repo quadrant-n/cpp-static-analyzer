@@ -19,10 +19,12 @@ class Config:
             'output_directory': 'out',
             'error_directory': '',
             'clang': {
-                'executable_path': 'clang',
+                'enabled': True,
+                'executable_path': 'clang++',
                 'additional_options': {}
             },
             'clang-tidy': {
+                'enabled': True,
                 'executable_path': 'clang-tidy',
                 'config_file_path': '.clang-tidy',
                 'additional_options': {}
@@ -51,11 +53,15 @@ class Config:
             Config.get_clang_tidy_config_file_path_from_config(config)
         self._clang_tidy_additional_options = \
             Config.get_clang_tidy_additional_options_from_config(config)
+        self._clang_tidy_enabled = \
+            Config.get_clang_tidy_enabled_from_config(config)
 
         self._clang_executable = \
             Config.get_clang_executable_path_from_config(config)
         self._clang_additional_options = \
             Config.get_clang_additional_options_from_config(config)
+        self._clang_enabled = \
+            Config.get_clang_enabled_from_config(config)
 
         self._compile_commands = \
             Config.get_compile_commands_from_config(config)
@@ -86,6 +92,14 @@ class Config:
         """Get additional options."""
         return self._clang_tidy_additional_options
 
+    def is_clang_tidy_enabled(self):
+        """Is clang-tidy enabled."""
+        return self._clang_tidy_enabled
+
+    def set_clang_tidy_enabled(self, enabled):
+        """Set clang-tidy enabled."""
+        self._clang_tidy_enabled = enabled
+
     def get_compile_commands(self):
         """Get path to compile commands."""
         if self._compile_commands == '':
@@ -107,6 +121,14 @@ class Config:
     def get_clang_additional_options(self):
         """Get clang additional options."""
         return self._clang_additional_options
+
+    def is_clang_enabled(self):
+        """Is clang enabled."""
+        return self._clang_enabled
+
+    def set_clang_enabled(self, enabled):
+        """Set clang enabled."""
+        self._clang_enabled = enabled
 
     def get_number_of_jobs(self):
         """Get number of jobs."""
@@ -222,6 +244,13 @@ class Config:
         return additional_options
 
     @classmethod
+    def get_clang_tidy_enabled_from_config(cls, config):
+        enabled = \
+            cls.get_clang_tidy_setting_from_config(config,
+                                                   'enabled')
+        return enabled
+
+    @classmethod
     def get_clang_executable_path_from_config(cls, config):
         """Get path to clang executable."""
         executable_path = \
@@ -236,6 +265,13 @@ class Config:
             cls.get_clang_setting_from_config(config,
                                               'additional_options')
         return additional_options
+
+    @classmethod
+    def get_clang_enabled_from_config(cls, config):
+        enabled = \
+            cls.get_clang_setting_from_config(config,
+                                              'enabled')
+        return enabled
 
     @classmethod
     def get_compile_commands_from_config(cls, config):

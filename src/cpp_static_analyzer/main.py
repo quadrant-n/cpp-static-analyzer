@@ -137,9 +137,26 @@ def _check_directories(arguments, config):
     return out_dir, err_dir
 
 
-def _execute_analyzer(arguments) -> int:
+def _create_config(arguments) -> cfg.Config:
     config_yaml = arguments.configuration_file
     config = cfg.Config(config_yaml)
+
+    # Override clang-tidy if available.
+    if arguments.enable_clang_tidy:
+        config.set_clang_tidy_enabled(True)
+    if arguments.disable_clang_tidy:
+        config.set_clang_tidy_enabled(False)
+
+    # Override clang static analyzer if available.
+    if arguments.enable_clang_analyzer:
+        config.set_clang_enabled(True)
+    if arguments.disable_clang_analyzer:
+        config.set_clang_enabled(False)
+
+    return config
+
+def _execute_analyzer(arguments) -> int:
+    config = _create_config(arguments)
 
     command_manager = _create_command_manager(arguments, config)
 
@@ -244,6 +261,22 @@ def execute():
                                                True),
                         help='Path to compile commands PKL file.',
                         default='')
+    # Enable/disable clang-tidy.
+    clang_tidy_group = parser.add_mutually_exclusive_group(required=False)
+    clang_tidy_group.add_argument('--enable_clang_tidy',
+                                  help='Enable clang-tidy',
+                                  action='store_true')
+    clang_tidy_group.add_argument('--disable_clang_tidy',
+                                  help='Disable clang-tidy',
+                                  action='store_true')
+    # Enable/disable clang static analyzer.
+    clang_analyzer_group = parser.add_mutually_exclusive_group(required=False)
+    clang_analyzer_group.add_argument('--enable_clang_analyzer',
+                                      help='Enable clang static analyzer',
+                                      action='store_true')
+    clang_analyzer_group.add_argument('--disable_clang_analyzer',
+                                      help='Disable clang static analyzer',
+                                      action='store_true')
     # Set logging verbosity.
     parser.add_argument('-v', '--verbosity',
                         type=int,
@@ -259,7 +292,10 @@ def execute():
                         help='Single file to analyze.',
                         default='')
 
-    args = parser.parse_args()
+    try:
+        args = parser.parse_args()
+    except SystemExit as e:
+        return e.code
 
     # Define verbosity.
     if args.verbosity == 0:
@@ -270,4 +306,4 @@ def execute():
         con.set_debug(con.DebugFlag.INFO)
 
     # Execute main function and return exit code to system.
-    sys.exit(main(arguments=args))
+    return main(arguments=args)

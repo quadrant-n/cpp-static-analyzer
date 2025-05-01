@@ -25,6 +25,7 @@ class CommandManager:
     @classmethod
     def create_from_json(cls, file_path: str):
         """Create from JSON."""
+        con.trace(f'Using commands {file_path}.')
         commands = cdb.Entry.load_compile_commands(file_path)
         command_manager = CommandManager()
         command_manager._set_using_commands(commands)
@@ -37,6 +38,7 @@ class CommandManager:
         """Create from PKL file."""
         command_manager = CommandManager()
         try:
+            con.trace(f'Using commands {file_path}.')
             with open(file_path, 'rb') as pkl_file_handle:
                 command_hashmap = pickle.load(pkl_file_handle)
                 command_manager._set_using_command_hashmap(command_hashmap)
@@ -88,37 +90,87 @@ class CommandManager:
 
     def _write_to_file(self, content, file_path):
         """Write to file."""
-        if len(content) > 0:
+        if len(content) == 0:
+            con.trace(f'No content available for writing to {file_path}')
+            return
+
+        try:
             with open(file_path, 'w', encoding="utf-8") as output_file:
                 print(content, file=output_file)
+        except OSError:
+            con.error(f'Cannot write to {file_path}.')
 
     def get_command_hashmap(self):
         """Get command hashmap."""
         return self._command_hashmap
 
-    def job(self,
-            config: cfg.Config,
-            output_directory: str,
+    def _get_file_name_and_id(self, entry: cdb.Entry):
+        """Calculate file ID."""
+        input_path = entry.get_input_path()
+        file_name = os.path.basename(input_path)
+        return file_name, hashlib.md5(file_name.encode('utf-8')).hexdigest()
+
+    def _run_clang_tidy(self, entry: cdb.Entry, config: cfg.Config,
+                        output_directory: str, error_directory: str):
+        """Run clang-tidy."""
+        result, error = \
+            CommandManager.execute_clang_tidy(entry, config)
+
+        file_name, file_id = self._get_file_name_and_id(entry)
+
+        output_file_path = f'{output_directory}/{file_name}.{file_id}'
+        error_file_path = f'{error_directory}/{file_name}.{file_id}'
+
+        self._write_to_file(result, output_file_path)
+        self._write_to_file(error, error_file_path)
+
+    def _run_clang_static_analyzer(self, entry: cdb.Entry, config: cfg.Config,
+                                   output_directory: str):
+        """Run clang static analyzer."""
+        result, error = \
+            CommandManager.execute_clang_static_analyzer(entry, config)
+
+        if len(result) == 0 and len(error) == 0:
+            con.trace(f'No result available for {entry.get_input_path()}')
+
+        file_name, file_id = self._get_file_name_and_id(entry)
+        output_file_path = f'{output_directory}/{file_name}.clang_sa.{file_id}'
+
+        try:
+            with open(output_file_path, 'w', encoding="utf-8") as output_file:
+                if len(result) > 0:
+                    print(result, file=output_file)
+                if len(error) > 0:
+                    print(result, file=output_file)
+        except OSError:
+            con.error(f'Cannot write to {output_file_path}.')
+
+    def job(self, config: cfg.Config, output_directory: str,
             error_directory: str):
         """Command executor job."""
         index = self.next_index()
         while index >= 0:
             command = self[index]
+            entry = cdb.Entry(command)
 
-            entry, result, error = \
-                CommandManager.execute_clang_tidy(command, config)
+            if config.is_clang_tidy_enabled():
+                self._run_clang_tidy(entry, config,
+                                     output_directory, error_directory)
 
-            input_path = entry.get_input_path()
-            file_name = os.path.basename(input_path)
-            file_id = hashlib.md5(file_name.encode('utf-8')).hexdigest()
-
-            output_file_path = f'{output_directory}/{file_name}.{file_id}'
-            error_file_path = f'{error_directory}/{file_name}.{file_id}'
-
-            self._write_to_file(result, output_file_path)
-            self._write_to_file(error, error_file_path)
+            if config.is_clang_enabled():
+                self._run_clang_static_analyzer(entry, config, output_directory)
 
             index = self.next_index()
+
+    def _write_to_stdout(self, content):
+        """Write to stdout."""
+        if len(content) > 0:
+            sys.stdout.write(content)
+
+    def _write_to_stderr(self, content):
+        """Write to stderr."""
+        if len(content) > 0:
+            sys.stderr.write(content)
 
     def analyze(self, config: cfg.Config, file_path: str):
         """Analyze single path."""
@@ -126,13 +178,23 @@ class CommandManager:
 
         if file_name_without_ext[0] in self._command_hashmap:
             command = self._command_hashmap[file_name_without_ext[0]]
-            _, result, error = \
-                CommandManager.execute_clang_tidy(command,
-                                                  config,
-                                                  file_path)
+            entry = cdb.Entry(command)
 
-            sys.stdout.write(result)
-            sys.stderr.write(error)
+            if config.is_clang_tidy_enabled():
+                result, error = \
+                    CommandManager.execute_clang_tidy(entry,
+                                                      config)
+                self._write_to_stdout(result)
+                self._write_to_stderr(error)
+
+            if config.is_clang_enabled():
+                result, error = \
+                    CommandManager.execute_clang_static_analyzer(entry,
+                                                                 config)
+
+                # Clang static analyzer reports diagnostic results as errors.
+                self._write_to_stdout(result)
+                self._write_to_stdout(error)
 
             return 0
 
@@ -153,34 +215,26 @@ class CommandManager:
         return 0
 
     @classmethod
-    def execute_clang_tidy(cls, command, config: cfg.Config,
-                           override_input_path='') -> tuple:
+    def execute_clang_tidy(cls, entry: cdb.Entry, config: cfg.Config) -> tuple:
         """Execute clang-tidy."""
-        entry = cdb.Entry(command)
-
         # Compose command line for clang-tidy.
         exec_cmd = []
 
         exec_cmd.append(config.get_clang_tidy_executable())
         exec_cmd.append('--quiet')
         exec_cmd.append(f'--config-file={config.get_clang_tidy_config_file()}')
-        exec_cmd.append('-p')
-        exec_cmd.append(config.get_compile_commands())
 
         for additional_option in config.get_clang_tidy_additional_options():
             exec_cmd.append(additional_option)
 
-        input_path = override_input_path
-        if input_path == '':
-            input_path = entry.get_input_path()
-
+        input_path = entry.get_input_path()
         exec_cmd.append(input_path)
 
-        exec_cmd.append('--')
-
         arguments = entry.get_arguments()
-        for arg in arguments:
-            exec_cmd.append(arg)
+        if len(arguments) > 0:
+            exec_cmd.append('--')
+            for arg in arguments:
+                exec_cmd.append(arg)
 
         proc = sproc.run(exec_cmd,
                          encoding='utf-8',
@@ -191,4 +245,40 @@ class CommandManager:
                          text=True,
                          check=False)
 
-        return entry, proc.stdout, proc.stderr
+        return proc.stdout, proc.stderr
+
+    @classmethod
+    def execute_clang_static_analyzer(cls, entry: cdb.Entry,
+                                      config: cfg.Config) -> tuple:
+        """Execute clang static analyzer."""
+        # Compose command line for clang-tidy.
+        exec_cmd = []
+
+        exec_cmd.append(config.get_clang_executable())
+        exec_cmd.append('--analyze')
+
+        for additional_option in config.get_clang_tidy_additional_options():
+            exec_cmd.append(additional_option)
+
+        arguments = entry.get_arguments()
+        skip_next = True
+        for arg in arguments:
+            if skip_next:
+                skip_next = False
+                continue
+
+            if arg == '-o':
+                skip_next = True
+            else:
+                exec_cmd.append(arg)
+
+        proc = sproc.run(exec_cmd,
+                         encoding='utf-8',
+                         shell=False,
+                         stdout=sproc.PIPE,
+                         stderr=sproc.PIPE,
+                         universal_newlines=True,
+                         text=True,
+                         check=False)
+
+        return proc.stdout, proc.stderr

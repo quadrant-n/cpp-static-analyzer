@@ -101,7 +101,7 @@ def test_empty_config(yaml_empty_config):
     config = cfg.Config(yaml_empty_config)
     assert config.get_compile_commands() == 'compile_commands.json', \
         'Must contain empty path.'
-    assert config.get_clang_executable() == 'clang', \
+    assert config.get_clang_executable() == 'clang++', \
         'Must be path to clang executable.'
     assert not config.get_clang_additional_options(), \
         'Must have empty additional options.'
@@ -118,7 +118,7 @@ def test_load_config_from_file(yaml_config):
     config = cfg.Config(yaml_config)
     assert config.get_compile_commands() == 'tests/compile_commands.json', \
         'Must contain compile commands.'
-    assert config.get_clang_executable() == 'clang', \
+    assert config.get_clang_executable() == 'clang++', \
         'Must be path to default clang executable.'
     assert config.get_clang_tidy_executable() == '~/.local/bin/clang-tidy', \
         'Must be ~/.local/bin/clang-tidy.'

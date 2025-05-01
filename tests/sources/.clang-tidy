@@ -12,7 +12,7 @@ ImplementationFileExtensions:
   - cc
   - cpp
   - cxx
-HeaderFilterRegex: '.*\\.h$'
+HeaderFilterRegex: '.*'
 FormatStyle:     none
 CheckOptions:
   cert-dcl16-c.NewSuffixes: 'L;LL;LU;LLU'

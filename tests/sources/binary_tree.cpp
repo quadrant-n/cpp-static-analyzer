@@ -1,6 +1,3 @@
-#include <iostream>
-#include <climits>
-
 #include "binary_tree.h"
 
 int main() {
@@ -13,7 +10,6 @@ int main() {
     root->right->right = new Node(25);
     std::cout << "Inorder traversal of the binary tree:" << std::endl;
     BinaryTree btree;
-    // std::cout << "Root node data:" << btree.getRootData() << std::endl;
     btree.setRootNode(root);
     btree.printInorder(root);
     std::cout << "Minimum value in right subtree: " << btree.getMinValueInRightSubtree(root) << std::endl;
