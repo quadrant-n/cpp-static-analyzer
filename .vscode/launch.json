@@ -12,5 +12,5 @@
             "cwd": "${workspaceFolder}",
             "console": "integratedTerminal"
         }
-]
+    ]
 }
