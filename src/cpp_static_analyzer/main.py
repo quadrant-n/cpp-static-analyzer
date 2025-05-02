@@ -201,10 +201,20 @@ def _execute_dump_configurations() -> int:
     return 0
 
 
-def main(arguments) -> int:
+def run(arguments) -> int:
     """ Main function. """
+
+    # Define verbosity.
+    if arguments.verbosity == 0:
+        con.set_debug(con.DebugFlag.QUIET)
+    elif arguments.verbosity == 2:
+        con.set_debug(con.DebugFlag.DEBUG)
+    else:
+        con.set_debug(con.DebugFlag.INFO)
+
     if arguments.dump_configurations:
         return _execute_dump_configurations()
+
     # Search for YAML file.
     if arguments.configuration_file == '':
         arguments.configuration_file = \
@@ -226,10 +236,10 @@ def _check_file(path, parser, arg: str, allow_empty=False):
     return path
 
 
-def execute():
-    """Begin execution."""
-    parser = argparse.ArgumentParser(description='C/C++ static analyzer \
-    using clang-tidy.')
+def create_argument_parser():
+    """ Create argument parser. """
+    parser = argparse.ArgumentParser(description='C/C++ static analyzer '
+                                     'using clang-tidy.')
 
     # Dump configurations.
     parser.add_argument('-dc', '--dump_configurations',
@@ -311,18 +321,17 @@ def execute():
                         help='Single file to analyze.',
                         default='')
 
+    return parser
+
+
+def execute():
+    """Begin execution."""
+    parser = create_argument_parser()
+
     try:
         args = parser.parse_args()
     except SystemExit as e:
         return e.code
 
-    # Define verbosity.
-    if args.verbosity == 0:
-        con.set_debug(con.DebugFlag.QUIET)
-    elif args.verbosity == 2:
-        con.set_debug(con.DebugFlag.DEBUG)
-    else:
-        con.set_debug(con.DebugFlag.INFO)
-
     # Execute main function and return exit code to system.
-    return main(arguments=args)
+    return run(arguments=args)

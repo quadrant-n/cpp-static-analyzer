@@ -1,4 +1,4 @@
-"""Test cases for command manager,"""
+"""Test cases for command manager."""
 
 import os.path
 import pytest
@@ -63,6 +63,7 @@ def test_command_hashmap(compile_commands_json, file_names):
         assert 'directory' in command, 'Must have directory.'
         assert 'file' in command, 'Must have file.'
         assert 'command' in command, 'Must have command.'
+        assert 'output' in command, 'Must have output.'
 
 
 def test_export_to_pickle(compile_commands_json, pkl_file_name):
