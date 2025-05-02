@@ -121,7 +121,7 @@ def _check_directories(arguments, config):
         output_directory = config.get_output_directory()
     out_dir = plib.Path(output_directory).as_posix()
 
-    # Check output directory.
+    # Create output directory.
     error_code = _create_directory(out_dir)
     if error_code == 0:
         con.trace(f'Using existing {out_dir} as output directory.')
@@ -132,6 +132,11 @@ def _check_directories(arguments, config):
     err_dir = error_directory
     if err_dir == '':
         err_dir = out_dir + '/errors'
+
+    # Create output directory.
+    error_code = _create_directory(err_dir)
+    if error_code == 0:
+        con.trace(f'Using existing {err_dir} as error directory.')
 
     return out_dir, err_dir
 

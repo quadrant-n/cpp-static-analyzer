@@ -1,17 +1,17 @@
 [
-{
-  "directory": "/home/nus/Projects/cpp-static-analyzer/tests/sources/build",
-  "command": "/usr/bin/c++   -g -std=gnu++20 -o CMakeFiles/tests_main.dir/main.cpp.o -c /home/nus/Projects/cpp-static-analyzer/tests/sources/main.cpp",
-  "file": "/home/nus/Projects/cpp-static-analyzer/tests/sources/main.cpp"
-},
-{
-  "directory": "/home/nus/Projects/cpp-static-analyzer/tests/sources/build",
-  "command": "/usr/bin/c++   -g -std=gnu++20 -o CMakeFiles/tests_link_list.dir/link_list.cpp.o -c /home/nus/Projects/cpp-static-analyzer/tests/sources/link_list.cpp",
-  "file": "/home/nus/Projects/cpp-static-analyzer/tests/sources/link_list.cpp"
-},
-{
-  "directory": "/home/nus/Projects/cpp-static-analyzer/tests/sources/build",
-  "command": "/usr/bin/c++   -g -std=gnu++20 -o CMakeFiles/tests_binary_tree.dir/binary_tree.cpp.o -c /home/nus/Projects/cpp-static-analyzer/tests/sources/binary_tree.cpp",
-  "file": "/home/nus/Projects/cpp-static-analyzer/tests/sources/binary_tree.cpp"
-}
+  {
+    "directory": "sources/build",
+    "command": "/usr/bin/c++   -g -std=gnu++20 -o CMakeFiles/tests_main.dir/main.cpp.o -c sources/main.cpp",
+    "file": "sources/main.cpp"
+  },
+  {
+    "directory": "sources/build",
+    "command": "/usr/bin/c++   -g -std=gnu++20 -o CMakeFiles/tests_link_list.dir/link_list.cpp.o -c sources/link_list.cpp",
+    "file": "sources/link_list.cpp"
+  },
+  {
+    "directory": "sources/build",
+    "command": "/usr/bin/c++   -g -std=gnu++20 -o CMakeFiles/tests_binary_tree.dir/binary_tree.cpp.o -c sources/binary_tree.cpp",
+    "file": "sources/binary_tree.cpp"
+  }
 ]

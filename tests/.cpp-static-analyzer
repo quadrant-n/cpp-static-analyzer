@@ -9,7 +9,7 @@ clang-tidy:
   config_file_path: sources/.clang-tidy
   executable_path: clang-tidy
   enabled: true
-compile_commands: sources/build/compile_commands.json
+compile_commands: sources/compile_commands.json
 compile_commands_pkl: ''
 number_of_jobs: 1
 output_directory: out

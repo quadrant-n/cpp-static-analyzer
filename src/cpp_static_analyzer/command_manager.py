@@ -124,11 +124,18 @@ class CommandManager:
             con.trace(f'clang-tidy returns {completed.returncode} '
                       f'when analyzing {file_name}')
 
+        result = completed.stdout
+        error = completed.stderr
+
+        if len(result) == 0 and len(error) == 0:
+            con.trace(f'No result available for {file_name}')
+            return
+
         output_file_path = f'{output_directory}/{file_name}.{file_id}'
         error_file_path = f'{error_directory}/{file_name}.{file_id}'
 
-        self._write_to_file(completed.stdout, output_file_path)
-        self._write_to_file(completed.stderr, error_file_path)
+        self._write_to_file(result, output_file_path)
+        self._write_to_file(error, error_file_path)
 
     def _run_clang_static_analyzer(self, entry: cdb.Entry, config: cfg.Config,
                                    output_directory: str):
@@ -139,10 +146,12 @@ class CommandManager:
         result = completed.stdout
         error = completed.stderr
 
-        if len(result) == 0 and len(error) == 0:
-            con.trace(f'No result available for {entry.get_input_path()}')
-
         file_name, file_id = self._get_file_name_and_id(entry)
+
+        if len(result) == 0 and len(error) == 0:
+            con.trace(f'No result available for {file_name}')
+            return
+
         output_file_path = f'{output_directory}/{file_name}.clang_sa.{file_id}'
 
         if completed.returncode != 0:
@@ -153,7 +162,7 @@ class CommandManager:
                 if len(result) > 0:
                     print(result, file=output_file)
                 if len(error) > 0:
-                    print(result, file=output_file)
+                    print(error, file=output_file)
         except OSError:
             con.error(f'Cannot write to {output_file_path}.')
 
