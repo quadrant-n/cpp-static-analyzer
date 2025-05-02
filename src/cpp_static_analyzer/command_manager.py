@@ -312,8 +312,9 @@ class CommandManager:
         diag_dir = config.get_clang_diagnostic_directory()
         if diag_dir != '':
             file_name = os.path.basename(entry.get_input_path())
+            file_id = hashlib.md5(file_name.encode('utf-8')).hexdigest()
             exec_cmd.append('-o')
-            exec_cmd.append(f'{diag_dir}/{file_name}')
+            exec_cmd.append(f'{diag_dir}/{file_name}.{file_id}')
 
         for additional_option in config.get_clang_additional_options():
             exec_cmd.append(additional_option)
