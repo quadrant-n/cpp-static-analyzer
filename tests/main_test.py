@@ -21,7 +21,7 @@ def test_display_help(parser):
         assert False, 'Should not go here.'
 
 
-def setup_module(module):
+def setup_module(_):
     """Setup module."""
     cwd = os.getcwd()
     os.chdir(cwd + '/tests')
