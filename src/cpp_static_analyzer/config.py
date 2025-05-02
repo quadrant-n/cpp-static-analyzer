@@ -49,35 +49,35 @@ class Config:
             config = yml
 
         self._clang_tidy_executable = \
-            Config.get_clang_tidy_executable_path_from_config(config)
+            Config._get_clang_tidy_executable_path_from_config(config)
         self._clang_tidy_config_file = \
-            Config.get_clang_tidy_config_file_path_from_config(config)
+            Config._get_clang_tidy_config_file_path_from_config(config)
         self._clang_tidy_additional_options = \
-            Config.get_clang_tidy_additional_options_from_config(config)
+            Config._get_clang_tidy_additional_options_from_config(config)
         self._clang_tidy_enabled = \
-            Config.get_clang_tidy_enabled_from_config(config)
+            Config._get_clang_tidy_enabled_from_config(config)
 
         self._clang_executable = \
-            Config.get_clang_executable_path_from_config(config)
+            Config._get_clang_executable_path_from_config(config)
         self._clang_additional_options = \
-            Config.get_clang_additional_options_from_config(config)
+            Config._get_clang_additional_options_from_config(config)
         self._clang_enabled = \
-            Config.get_clang_enabled_from_config(config)
+            Config._get_clang_enabled_from_config(config)
         self._clang_diagnostic_directory = \
-            Config.get_clang_diagnostic_directory_from_config(config)
+            Config._get_clang_diagnostic_directory_from_config(config)
 
         self._compile_commands = \
-            Config.get_compile_commands_from_config(config)
+            Config._get_compile_commands_from_config(config)
         self._compile_commands_pkl = \
-            Config.get_compile_commands_pkl_from_config(config)
+            Config._get_compile_commands_pkl_from_config(config)
 
         self._number_of_jobs = \
-            Config.get_number_of_jobs_from_config(config)
+            Config._get_number_of_jobs_from_config(config)
 
         self._output_directory = \
-            Config.get_output_directory_from_config(config)
+            Config._get_output_directory_from_config(config)
         self._error_directory = \
-            Config.get_error_directory_from_config(config)
+            Config._get_error_directory_from_config(config)
 
     def get_clang_tidy_executable(self):
         """Get clang-tidy executable path."""
@@ -181,7 +181,8 @@ class Config:
             return cls.default_config()
 
     @classmethod
-    def get_clang_tidy_setting_from_config(cls, config, key):
+    def get_clang_tidy_setting_from_config(cls, config, key,
+                                           replace_empty=False):
         """ Get settings for clang-tidy. """
         default_config = cls.default_config()
         default_clang_tidy_settings = default_config['clang-tidy']
@@ -190,10 +191,12 @@ class Config:
         clang_tidy_settings = config['clang-tidy']
         if key not in clang_tidy_settings:
             return default_clang_tidy_settings[key]
+        if replace_empty and clang_tidy_settings[key] == '':
+            return default_clang_tidy_settings[key]
         return clang_tidy_settings[key]
 
     @classmethod
-    def get_clang_setting_from_config(cls, config, key):
+    def get_clang_setting_from_config(cls, config, key, replace_empty=False):
         """ Get settings for clang. """
         default_config = cls.default_config()
         default_clang_settings = default_config['clang']
@@ -202,34 +205,40 @@ class Config:
         clang_settings = config['clang']
         if key not in clang_settings:
             return default_clang_settings[key]
+        if replace_empty and clang_settings[key] == '':
+            return default_clang_settings[key]
+
         return clang_settings[key]
 
     @classmethod
-    def get_setting_from_config(cls, config, key):
+    def _get_setting_from_config(cls, config, key, replace_empty=False):
         """Get setting using key."""
         if key not in config:
+            default_config = cls.default_config()
+            return default_config[key]
+        if replace_empty and config[key] == '':
             default_config = cls.default_config()
             return default_config[key]
         return config[key]
 
     @classmethod
-    def get_clang_tidy_executable_path_from_config(cls, config):
+    def _get_clang_tidy_executable_path_from_config(cls, config):
         """Get path to clang-tidy executable."""
         executable_path = \
             cls.get_clang_tidy_setting_from_config(config,
-                                                   'executable_path')
+                                                   'executable_path', True)
         return executable_path
 
     @classmethod
-    def get_clang_tidy_config_file_path_from_config(cls, config):
+    def _get_clang_tidy_config_file_path_from_config(cls, config):
         """Get .clang-tidy file path settings."""
         config_file_path = \
             cls.get_clang_tidy_setting_from_config(config,
-                                                   'config_file_path')
+                                                   'config_file_path', True)
         return config_file_path
 
     @classmethod
-    def get_clang_tidy_additional_options_from_config(cls, config):
+    def _get_clang_tidy_additional_options_from_config(cls, config):
         """Get clang-tidy additional options."""
         additional_options = \
             cls.get_clang_tidy_setting_from_config(config,
@@ -237,22 +246,23 @@ class Config:
         return additional_options
 
     @classmethod
-    def get_clang_tidy_enabled_from_config(cls, config):
+    def _get_clang_tidy_enabled_from_config(cls, config):
+        """Get clang-tidy enable flag."""
         enabled = \
             cls.get_clang_tidy_setting_from_config(config,
                                                    'enabled')
         return enabled
 
     @classmethod
-    def get_clang_executable_path_from_config(cls, config):
+    def _get_clang_executable_path_from_config(cls, config):
         """Get path to clang executable."""
         executable_path = \
             cls.get_clang_setting_from_config(config,
-                                              'executable_path')
+                                              'executable_path', True)
         return executable_path
 
     @classmethod
-    def get_clang_additional_options_from_config(cls, config):
+    def _get_clang_additional_options_from_config(cls, config):
         """Get additional options for clang."""
         additional_options = \
             cls.get_clang_setting_from_config(config,
@@ -260,15 +270,15 @@ class Config:
         return additional_options
 
     @classmethod
-    def get_clang_enabled_from_config(cls, config):
-        """"""
+    def _get_clang_enabled_from_config(cls, config):
+        """Get clang enable flag."""
         enabled = \
             cls.get_clang_setting_from_config(config,
                                               'enabled')
         return enabled
 
     @classmethod
-    def get_clang_diagnostic_directory_from_config(cls, config):
+    def _get_clang_diagnostic_directory_from_config(cls, config):
         """Get path to diagnostic directory."""
         diagnostic_directory = \
             cls.get_clang_setting_from_config(config,
@@ -276,17 +286,17 @@ class Config:
         return diagnostic_directory
 
     @classmethod
-    def get_compile_commands_from_config(cls, config):
+    def _get_compile_commands_from_config(cls, config):
         """Get path to compile commands."""
         compile_commands = \
-            cls.get_setting_from_config(config, 'compile_commands')
+            cls._get_setting_from_config(config, 'compile_commands', True)
         return compile_commands
 
     @classmethod
-    def get_number_of_jobs_from_config(cls, config):
+    def _get_number_of_jobs_from_config(cls, config):
         """Get number of jobs."""
         number_of_jobs = \
-            cls.get_setting_from_config(config, 'number_of_jobs')
+            cls._get_setting_from_config(config, 'number_of_jobs')
         try:
             num_jobs_int = int(number_of_jobs)
             return max(num_jobs_int, 1)
@@ -294,22 +304,22 @@ class Config:
             return 1
 
     @classmethod
-    def get_output_directory_from_config(cls, config):
+    def _get_output_directory_from_config(cls, config):
         """Get output directory."""
         output_directory = \
-            cls.get_setting_from_config(config, 'output_directory')
+            cls._get_setting_from_config(config, 'output_directory', True)
         return output_directory
 
     @classmethod
-    def get_error_directory_from_config(cls, config):
+    def _get_error_directory_from_config(cls, config):
         """Get error directory."""
         error_directory = \
-            cls.get_setting_from_config(config, 'error_directory')
+            cls._get_setting_from_config(config, 'error_directory')
         return error_directory
 
     @classmethod
-    def get_compile_commands_pkl_from_config(cls, config):
+    def _get_compile_commands_pkl_from_config(cls, config):
         """Get path to compile commands PKL file."""
         compile_commands = \
-            cls.get_setting_from_config(config, 'compile_commands_pkl')
+            cls._get_setting_from_config(config, 'compile_commands_pkl')
         return compile_commands

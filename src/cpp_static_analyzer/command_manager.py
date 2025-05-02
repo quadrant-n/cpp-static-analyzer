@@ -115,22 +115,29 @@ class CommandManager:
     def _run_clang_tidy(self, entry: cdb.Entry, config: cfg.Config,
                         output_directory: str, error_directory: str):
         """Run clang-tidy."""
-        result, error = \
+        completed = \
             CommandManager.execute_clang_tidy(entry, config)
 
         file_name, file_id = self._get_file_name_and_id(entry)
 
+        if completed.returncode != 0:
+            con.trace(f'clang-tidy returns {completed.returncode} '
+                      f'when analyzing {file_name}')
+
         output_file_path = f'{output_directory}/{file_name}.{file_id}'
         error_file_path = f'{error_directory}/{file_name}.{file_id}'
 
-        self._write_to_file(result, output_file_path)
-        self._write_to_file(error, error_file_path)
+        self._write_to_file(completed.stdout, output_file_path)
+        self._write_to_file(completed.stderr, error_file_path)
 
     def _run_clang_static_analyzer(self, entry: cdb.Entry, config: cfg.Config,
                                    output_directory: str):
         """Run clang static analyzer."""
-        result, error = \
+        completed = \
             CommandManager.execute_clang_static_analyzer(entry, config)
+
+        result = completed.stdout
+        error = completed.stderr
 
         if len(result) == 0 and len(error) == 0:
             con.trace(f'No result available for {entry.get_input_path()}')
@@ -138,6 +145,9 @@ class CommandManager:
         file_name, file_id = self._get_file_name_and_id(entry)
         output_file_path = f'{output_directory}/{file_name}.clang_sa.{file_id}'
 
+        if completed.returncode != 0:
+            con.trace(f'clang-tidy returns {completed.returncode} '
+                      f'when analyzing {file_name}')
         try:
             with open(output_file_path, 'w', encoding="utf-8") as output_file:
                 if len(result) > 0:
@@ -174,6 +184,31 @@ class CommandManager:
         if len(content) > 0:
             sys.stderr.write(content)
 
+    def _analyze_with_clang_tidy(self, config: cfg.Config, entry: cdb.Entry):
+        """Run clang-tidy."""
+        completed = \
+            CommandManager.execute_clang_tidy(entry, config)
+
+        if completed.returncode != 0:
+            con.error(f'clang-tidy returns {completed.returncode} '
+                      f'when analyzing {entry.get_input_path()}')
+
+        self._write_to_stdout(completed.stdout)
+        self._write_to_stderr(completed.stderr)
+
+    def _analyze_with_clang(self, config: cfg.Config, entry: cdb.Entry):
+        """Run clang static analyzer."""
+        completed = \
+            CommandManager.execute_clang_static_analyzer(entry, config)
+
+        if completed.returncode != 0:
+            con.error(f'clang returns {completed.returncode} '
+                      f'when analyzing {entry.get_input_path()}')
+
+        # Clang static analyzer reports diagnostic results as errors.
+        self._write_to_stdout(completed.stdout)
+        self._write_to_stdout(completed.stderr)
+
     def analyze(self, config: cfg.Config, file_path: str):
         """Analyze single path."""
         file_name_without_ext = os.path.splitext(file_path)
@@ -183,20 +218,10 @@ class CommandManager:
             entry = cdb.Entry(command)
 
             if config.is_clang_tidy_enabled():
-                result, error = \
-                    CommandManager.execute_clang_tidy(entry,
-                                                      config)
-                self._write_to_stdout(result)
-                self._write_to_stderr(error)
+                self._analyze_with_clang_tidy(config, entry)
 
             if config.is_clang_enabled():
-                result, error = \
-                    CommandManager.execute_clang_static_analyzer(entry,
-                                                                 config)
-
-                # Clang static analyzer reports diagnostic results as errors.
-                self._write_to_stdout(result)
-                self._write_to_stdout(error)
+                self._analyze_with_clang(config, entry)
 
             return 0
 
@@ -207,7 +232,7 @@ class CommandManager:
         """Create directory."""
         try:
             directory_name = os.path.dirname(file_path)
-            os.makedirs(directory_name)
+            os.makedirs(directory_name, exist_ok=True)
             return 0
         except OSError:
             return -1
@@ -230,7 +255,8 @@ class CommandManager:
         return 0
 
     @classmethod
-    def execute_clang_tidy(cls, entry: cdb.Entry, config: cfg.Config) -> tuple:
+    def execute_clang_tidy(cls, entry: cdb.Entry,
+                           config: cfg.Config) -> sproc.CompletedProcess:
         """Execute clang-tidy."""
         # Compose command line for clang-tidy.
         exec_cmd = []
@@ -260,11 +286,13 @@ class CommandManager:
                          text=True,
                          check=False)
 
-        return proc.stdout, proc.stderr
+        return proc
 
     @classmethod
-    def execute_clang_static_analyzer(cls, entry: cdb.Entry,
-                                      config: cfg.Config) -> tuple:
+    def execute_clang_static_analyzer(
+            cls,
+            entry: cdb.Entry,
+            config: cfg.Config) -> sproc.CompletedProcess:
         """Execute clang static analyzer."""
         # Compose command line for clang-tidy.
         exec_cmd = []
@@ -302,4 +330,4 @@ class CommandManager:
                          text=True,
                          check=False)
 
-        return proc.stdout, proc.stderr
+        return proc

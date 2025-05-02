@@ -25,8 +25,10 @@ def fixture_yaml_empty_config():
     """An empty config."""
     yaml_string = '''
     compile_commands: ''
-    clang: {}
-    clang-tidy: {}
+    clang:
+        executable_path: ''
+    clang-tidy:
+        executable_path: ''
     path_converters: {}
     '''
     return yaml.safe_load(yaml_string)
