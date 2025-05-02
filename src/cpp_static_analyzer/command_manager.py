@@ -50,6 +50,7 @@ class CommandManager:
         return command_manager
 
     def _set_using_commands(self, commands: list):
+        """Set using commands."""
         self._commands = commands
         self._command_count = len(self._commands)
 
@@ -59,6 +60,7 @@ class CommandManager:
             self._command_hashmap[file_name_only] = command
 
     def _set_using_command_hashmap(self, command_hashmap: dict):
+        """Set using command hashmap."""
         self._command_hashmap = command_hashmap
         self._commands = []
         for command in self._command_hashmap:
@@ -201,8 +203,21 @@ class CommandManager:
         con.error(f'No entry found for {file_path}.')
         return -1
 
+    def _create_directory(self, file_path: str) -> int:
+        """Create directory."""
+        try:
+            directory_name = os.path.dirname(file_path)
+            os.makedirs(directory_name)
+            return 0
+        except OSError:
+            return -1
+
     def export_to_pkl(self, file_path: str) -> int:
         """Export to PKL file."""
+        if self._create_directory(file_path) != 0:
+            con.error(f'Cannot create directories for {file_path}.')
+            return -2
+
         try:
             with open(file_path, 'wb') as output_file:
                 pickle.dump(self._command_hashmap, output_file,
@@ -263,7 +278,7 @@ class CommandManager:
             exec_cmd.append('-o')
             exec_cmd.append(f'{diag_dir}/{file_name}')
 
-        for additional_option in config.get_clang_tidy_additional_options():
+        for additional_option in config.get_clang_additional_options():
             exec_cmd.append(additional_option)
 
         arguments = entry.get_arguments()

@@ -1,5 +1,6 @@
 clang:
-  additional_options: {}
+  additional_options:
+  - -Weverything
   executable_path: clang++
   enabled: true
   diagnostic_directory: 'diag'
