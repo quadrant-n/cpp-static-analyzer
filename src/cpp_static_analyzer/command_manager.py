@@ -3,6 +3,7 @@
 import subprocess as sproc
 import threading
 import os.path
+import pathlib
 import hashlib
 import pickle
 import sys
@@ -10,6 +11,7 @@ import sys
 import cpp_static_analyzer.compile_db as cdb
 import cpp_static_analyzer.config as cfg
 import cpp_static_analyzer.console as con
+import cpp_static_analyzer.error_codes as ec
 
 
 class CommandManager:
@@ -90,21 +92,49 @@ class CommandManager:
         """Get current index."""
         return self._current_index
 
-    def _write_to_file(self, content, file_path):
+    def _write_to_file(self, content, file_path) -> int:
         """Write to file."""
         if len(content) == 0:
             con.trace(f'No content available for writing to {file_path}')
-            return
+            return ec.ErrorCodes.ERROR.value
 
+        posix_path = pathlib.Path(file_path).resolve().as_posix()
         try:
-            with open(file_path, 'w', encoding="utf-8") as output_file:
+            with open(posix_path, 'w', encoding="utf-8") as output_file:
                 print(content, file=output_file)
         except OSError:
-            con.error(f'Cannot write to {file_path}.')
+            con.error(f'Cannot write to {posix_path}.')
+            return ec.ErrorCodes.FILE_WRITE_ERROR.value
+        return ec.ErrorCodes.SUCCESS.value
 
-    def get_command_hashmap(self):
-        """Get command hashmap."""
-        return self._command_hashmap
+    def get_commands(self):
+        """Get commands."""
+        return self._commands
+
+    def get_command_hashmap_length(self):
+        """Get command hashmap length."""
+        return len(self._command_hashmap)
+
+    def get_command(self, key: str):
+        """Get command using key."""
+        # Search using key itself.
+        if key in self._command_hashmap:
+            return self._command_hashmap[key]
+
+        # Find using posix key first.
+        posix_key = pathlib.Path(key).resolve().as_posix()
+        if posix_key in self._command_hashmap:
+            return self._command_hashmap[posix_key]
+
+        # Sequential search if key was relative path.
+        for hash_key in self._command_hashmap:
+            posix_hash_key = pathlib.Path(hash_key).resolve().as_posix()
+
+            if posix_key == posix_hash_key:
+                return self._command_hashmap[hash_key]
+
+        # Not found.
+        return None
 
     def _get_file_name_and_id(self, entry: cdb.Entry):
         """Calculate file ID."""
@@ -222,8 +252,8 @@ class CommandManager:
         """Analyze single path."""
         file_name_without_ext = os.path.splitext(file_path)
 
-        if file_name_without_ext[0] in self._command_hashmap:
-            command = self._command_hashmap[file_name_without_ext[0]]
+        command = self.get_command(file_name_without_ext[0])
+        if command is not None:
             entry = cdb.Entry(command)
 
             if config.is_clang_tidy_enabled():
@@ -232,25 +262,24 @@ class CommandManager:
             if config.is_clang_enabled():
                 self._analyze_with_clang(config, entry)
 
-            return 0
+            return ec.ErrorCodes.SUCCESS.value
 
         con.error(f'No entry found for {file_path}.')
-        return -1
+        return ec.ErrorCodes.ERROR.value
 
     def _create_directory(self, file_path: str) -> int:
         """Create directory."""
-        try:
-            directory_name = os.path.dirname(file_path)
-            os.makedirs(directory_name, exist_ok=True)
-            return 0
-        except OSError:
-            return -1
+        directory_name = os.path.dirname(file_path)
+        os.makedirs(directory_name, exist_ok=True)
+        if os.path.isdir(directory_name):
+            return ec.ErrorCodes.SUCCESS.value
+        return ec.ErrorCodes.ERROR.value
 
     def export_to_pkl(self, file_path: str) -> int:
         """Export to PKL file."""
-        if self._create_directory(file_path) != 0:
+        if self._create_directory(file_path) != ec.ErrorCodes.SUCCESS.value:
             con.error(f'Cannot create directories for {file_path}.')
-            return -2
+            return ec.ErrorCodes.ERROR.value
 
         try:
             with open(file_path, 'wb') as output_file:
@@ -258,10 +287,10 @@ class CommandManager:
                             protocol=pickle.HIGHEST_PROTOCOL)
         except OSError:
             con.error(f'Error writing data to {file_path}.')
-            return -1
+            return ec.ErrorCodes.FILE_WRITE_ERROR.value
 
         con.trace(f'Commands has been written to {file_path}')
-        return 0
+        return ec.ErrorCodes.SUCCESS.value
 
     @classmethod
     def execute_clang_tidy(cls, entry: cdb.Entry,

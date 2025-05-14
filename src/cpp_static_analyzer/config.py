@@ -5,7 +5,6 @@ import os
 import sys
 import yaml
 
-
 class Config:
     """Configuration object."""
 
@@ -156,14 +155,15 @@ class Config:
         if current_path.is_dir():
             found_path = cls._get_config_file_path(current_path.as_posix())
             if found_path != '':
-                return found_path
+                return plib.Path(found_path).as_posix()
         if current_path.is_file():
             current_path = current_path.parent
         parents = current_path.parents
         for parent in parents:
             config_file_path = cls._get_config_file_path(parent.as_posix())
             if config_file_path != '':
-                return config_file_path
+                return plib.Path(config_file_path).as_posix()
+
         return ''
 
     @classmethod
@@ -293,7 +293,7 @@ class Config:
         return compile_commands
 
     @classmethod
-    def _get_number_of_jobs_from_config(cls, config):
+    def _get_number_of_jobs_from_config(cls, config) -> int:
         """Get number of jobs."""
         number_of_jobs = \
             cls._get_setting_from_config(config, 'number_of_jobs')

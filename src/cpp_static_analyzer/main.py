@@ -1,27 +1,34 @@
 """Main functions."""
 
+from builtins import OSError
 import os
 import os.path as fpath
 import argparse
 import threading
 import time
 import pathlib as plib
+import importlib.metadata as md
+
 
 import cpp_static_analyzer.command_manager as cm
 import cpp_static_analyzer.thread_manager as tm
 import cpp_static_analyzer.config as cfg
 import cpp_static_analyzer.console as con
+import cpp_static_analyzer.error_codes as ec
 
 
 def _check_and_make_directory(directory):
     if not fpath.exists(directory):
-        os.mkdir(directory)
-        return 1
+        try:
+            os.makedirs(directory)
+            return ec.ErrorCodes.SUCCESS.value
+        except OSError:
+            return ec.ErrorCodes.ERROR.value
 
     if fpath.isfile(directory):
-        return -1
+        return ec.ErrorCodes.FILE_EXIST.value
 
-    return 0
+    return ec.ErrorCodes.SUCCESS.value
 
 
 def _print_progress(command_manager,
@@ -54,7 +61,7 @@ def _print_progress(command_manager,
 
 
 def _analyze_single_file(arguments, command_manager, config):
-    input_file = os.path.abspath(arguments.input_file)
+    input_file = arguments.input_file
     con.trace(f'Analyzing {input_file}')
     return command_manager.analyze(config, input_file)
 
@@ -86,17 +93,17 @@ def _execute_analyzer_threads(arguments,
 
     if last_idx == command_manager.get_current_index():
         con.error('All commands processed successfully!')
-        return 0
+        return ec.ErrorCodes.SUCCESS.value
 
     con.error('Some commands failed to process!')
-    return 1
+    return ec.ErrorCodes.ERROR.value
 
 
 def _create_directory(directory):
     error_code = _check_and_make_directory(directory)
 
-    if error_code < 0:
-        con.error(f'{directory} must be a directory.')
+    if error_code != ec.ErrorCodes.SUCCESS.value:
+        con.error(f'Cannot create {directory}.')
 
     return error_code
 
@@ -123,8 +130,8 @@ def _check_directories(arguments, config):
 
     # Create output directory.
     error_code = _create_directory(out_dir)
-    if error_code == 0:
-        con.trace(f'Using existing {out_dir} as output directory.')
+    if error_code == ec.ErrorCodes.SUCCESS.value:
+        con.trace(f'Using {out_dir} as output directory.')
 
     error_directory = arguments.error_directory
     if error_directory == '':
@@ -135,8 +142,8 @@ def _check_directories(arguments, config):
 
     # Create output directory.
     error_code = _create_directory(err_dir)
-    if error_code == 0:
-        con.trace(f'Using existing {err_dir} as error directory.')
+    if error_code == ec.ErrorCodes.SUCCESS.value:
+        con.trace(f'Using {err_dir} as error directory.')
 
     return out_dir, err_dir
 
@@ -148,7 +155,7 @@ def _check_directory_for_clang_diagnostics(config):
     diag_dir = config.get_clang_diagnostic_directory()
     diag_dir_posix = plib.Path(diag_dir).as_posix()
     error_code = _create_directory(diag_dir_posix)
-    if error_code == 0:
+    if error_code == ec.ErrorCodes.SUCCESS.value:
         con.trace(f'Using {diag_dir} as diagnostic directory for clang.')
 
 
@@ -177,9 +184,13 @@ def _execute_analyzer(arguments) -> int:
     command_manager = _create_command_manager(arguments, config)
 
     if arguments.export_to_pkl != '':
-        command_manager.export_to_pkl(arguments.export_to_pkl)
-        con.trace(f'Compile commands exported to {arguments.export_to_pkl}.')
-        return 0
+        error_code = command_manager.export_to_pkl(arguments.export_to_pkl)
+        if error_code == ec.ErrorCodes.SUCCESS.value:
+            con.trace(f'Compile commands exported to {arguments.export_to_pkl}.')
+        else:
+            con.trace(f'Failed to export compile commands to '
+                      f'{arguments.export_to_pkl}.')
+        return error_code
 
     _check_directory_for_clang_diagnostics(config)
 
@@ -198,7 +209,7 @@ def _execute_analyzer(arguments) -> int:
 def _execute_dump_configurations() -> int:
     """ Dump configurations. """
     cfg.Config.write_default_config_to_stdout()
-    return 0
+    return ec.ErrorCodes.SUCCESS.value
 
 
 def run(arguments) -> int:
@@ -238,8 +249,18 @@ def _check_file(path, parser, arg: str, allow_empty=False):
 
 def create_argument_parser():
     """ Create argument parser. """
-    parser = argparse.ArgumentParser(description='C/C++ static analyzer '
-                                     'using clang-tidy.')
+    metadata = md.metadata('cpp-static-analyzer')
+    metadata_json = metadata.json
+    program_title = metadata_json['name']
+    description = metadata_json['summary']
+    version = metadata_json['version']
+    license_str = metadata_json['license']
+    epilog = f'{license_str}'
+
+    parser = argparse.ArgumentParser(prog=program_title,
+                                     description=description,
+                                     epilog=epilog,
+                                     formatter_class=argparse.RawDescriptionHelpFormatter)
 
     # Dump configurations.
     parser.add_argument('-dc', '--dump_configurations',
@@ -259,21 +280,25 @@ def create_argument_parser():
                                                'Configuration file'),
                         help='Path YAML configuration file.',
                         default='')
+
     # Set output directory for writing results.
     parser.add_argument('-o', '--output_directory',
                         type=str,
                         help='Output directory.',
                         default='')
+
     # Set output directory for writing results.
     parser.add_argument('-err', '--error_directory',
                         type=str,
                         help='Error directory.',
                         default='')
+
     # Specify number of jobs to run static analyzer.
     parser.add_argument('-j', '--jobs',
                         type=int,
                         help='Number of jobs.',
                         default=1)
+
     # Path to compile_commands.json.
     parser.add_argument('-cdb', '--compile_commands',
                         type=lambda
@@ -282,6 +307,7 @@ def create_argument_parser():
                                                True),
                         help='Path to compile_commands.json.',
                         default='')
+
     # Path to pickle file.
     parser.add_argument('-pkl', '--compile_commands_pkl',
                         type=lambda
@@ -290,6 +316,7 @@ def create_argument_parser():
                                                True),
                         help='Path to compile commands PKL file.',
                         default='')
+
     # Enable/disable clang-tidy.
     clang_tidy_group = parser.add_mutually_exclusive_group(required=False)
     clang_tidy_group.add_argument('--enable_clang_tidy',
@@ -298,6 +325,7 @@ def create_argument_parser():
     clang_tidy_group.add_argument('--disable_clang_tidy',
                                   help='Disable clang-tidy',
                                   action='store_true')
+
     # Enable/disable clang static analyzer.
     clang_analyzer_group = parser.add_mutually_exclusive_group(required=False)
     clang_analyzer_group.add_argument('--enable_clang_analyzer',
@@ -306,12 +334,14 @@ def create_argument_parser():
     clang_analyzer_group.add_argument('--disable_clang_analyzer',
                                       help='Disable clang static analyzer',
                                       action='store_true')
+
     # Set logging verbosity.
     parser.add_argument('-v', '--verbosity',
                         type=int,
                         help='Log to stderr. 0: Quiet, 1: Information, \
                         2: Output debug logs.',
                         default=1)
+
     # Analyze single file.
     parser.add_argument('-f', '--input_file',
                         type=lambda
@@ -320,6 +350,11 @@ def create_argument_parser():
                                                True),
                         help='Single file to analyze.',
                         default='')
+
+    # Version.
+    parser.add_argument('--version',
+                        action='version',
+                        version=f'{version}')
 
     return parser
 

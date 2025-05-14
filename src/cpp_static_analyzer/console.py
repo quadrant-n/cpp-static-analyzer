@@ -44,8 +44,3 @@ def error(*args, **kwargs):
     if _ConsoleFlags.get_debug_flag() == DebugFlag.QUIET:
         return
     print(*args, file=sys.stderr, **kwargs)
-
-
-def out(*args, **kwargs):
-    """Output to stdout."""
-    print(*args, file=sys.stdout, **kwargs)

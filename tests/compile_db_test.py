@@ -39,21 +39,6 @@ def fixture_compile_commands_json():
     return json.loads(cdb_json)
 
 
-@pytest.fixture(name='compile_command')
-def fixture_compile_command():
-    """Simple compile command."""
-    return ['c++',
-            '-I/Users/nus/include',
-            '-O3',
-            '-DNDEBUG',
-            '-w',
-            '-Wall',
-            '-Wextra',
-            '-o',
-            '/Users/nus/x.out',
-            'x.cpp']
-
-
 def test_command_parser(compile_commands_json):
     """Testing command parser."""
     command_list = \

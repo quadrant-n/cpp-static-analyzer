@@ -1,16 +1,17 @@
-[tool.poetry]
+[project]
 name = "cpp-static-analyzer"
 version = "0.0.1"
-description = "Static analyzer executor."
-authors = ["Stefanus Nanami <stefanus-nanami@capcom.com>"]
-license = "MIT"
+description = "C/C++ static analyzer using clang-tidy and clang static analyzer."
+authors = [{name = "Stefanus Nanami", email = "stefanus-nanami@capcom.com"}]
+license = {file = "LICENSE"}
 readme = "README.md"
 package-mode = true
-repository = "https://github.com/quadrant-n/cpp-static-analyzer"
-keywords = ["static", "analyzer", "C++"]
+keywords = ["static", "analyzer", "C++", "clang-tidy", "clang static analyzer", "C"]
 
 [tool.poetry.urls]
 "Issues" = "https://github.com/quadrant-n/cpp-static-analyzer/issues"
+"Repository" = "https://github.com/quadrant-n/cpp-static-analyzer"
+"Documentation" = "https://github.com/quadrant-n/cpp-static-analyzer/wiki"
 
 [tool.poetry.dependencies]
 python = "^3.12"

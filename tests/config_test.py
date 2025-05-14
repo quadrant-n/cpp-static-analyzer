@@ -3,6 +3,7 @@
 import os
 import pytest
 import yaml
+import pathlib as plib
 import cpp_static_analyzer.config as cfg
 
 
@@ -38,34 +39,39 @@ def fixture_yaml_empty_config():
 def fixture_file_in_nested_directory():
     """File in nested directory."""
     cwd = os.getcwd()
-    return os.path.join(cwd, 'tests/deep/nested/directory/for/testing.txt')
+    joined_path = os.path.join(cwd, 'tests/deep/nested/directory/for/testing.txt')
+    return plib.Path(joined_path).as_posix()
 
 
 @pytest.fixture(name='nested_directory')
 def fixture_nested_directory():
     """Nested directory."""
     cwd = os.getcwd()
-    return os.path.join(cwd, 'tests/deep/nested/directory/for/')
+    joined_path = os.path.join(cwd, 'tests/deep/nested/directory/for/')
+    return plib.Path(joined_path).as_posix()
 
 
 @pytest.fixture(name='directory_not_exist')
 def fixture_directory_not_exist():
     """Unexisting directory."""
     cwd = os.getcwd()
-    return os.path.join(cwd, 'tests/not_exist')
+    joined_path = os.path.join(cwd, 'tests/not_exist')
+    return plib.Path(joined_path).as_posix()
 
 
 @pytest.fixture(name='config_exist')
 def fixture_config_exist():
     """Config file exists."""
     cwd = os.getcwd()
-    return os.path.join(cwd, 'tests/deep/.cpp-static-analyzer')
+    joined_path = os.path.join(cwd, 'tests/deep/.cpp-static-analyzer')
+    return plib.Path(joined_path).as_posix()
 
 
 def config_yml_file_path():
     """Helper functions to fetch config file."""
     cwd = os.getcwd()
-    return os.path.join(cwd, 'tests/deep/.cpp-static-analyzer')
+    joined_path = os.path.join(cwd, 'tests/deep/.cpp-static-analyzer')
+    return plib.Path(joined_path).as_posix()
 
 
 def test_search_for_config(nested_directory):

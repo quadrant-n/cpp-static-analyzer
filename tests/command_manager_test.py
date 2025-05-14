@@ -1,8 +1,12 @@
 """Test cases for command manager."""
 
 import os.path
+import pathlib
 import pytest
+
+
 import cpp_static_analyzer.command_manager as cm
+import cpp_static_analyzer.error_codes as ec
 
 
 @pytest.fixture(name='compile_commands_json')
@@ -17,6 +21,14 @@ def fixture_file_names():
     return ['sources/main.cpp',
             'sources/link_list.cpp',
             'sources/binary_tree.cpp']
+
+
+@pytest.fixture(name='full_paths')
+def fixture_full_paths():
+    """Fixture of full paths in compile_commands.json."""
+    return [pathlib.Path('sources/main.cpp').resolve().as_posix(),
+            pathlib.Path('sources/link_list.cpp').resolve().as_posix(),
+            pathlib.Path('sources/binary_tree.cpp').resolve().as_posix()]
 
 
 @pytest.fixture(name='pkl_file_name')
@@ -52,14 +64,33 @@ def test_command_manager(compile_commands_json):
 def test_command_hashmap(compile_commands_json, file_names):
     """Testing command hashmap."""
     cmd_mgr = cm.CommandManager.create_from_json(compile_commands_json)
-    command_hashmap = cmd_mgr.get_command_hashmap()
-    assert len(command_hashmap) == len(file_names), 'Must have four commands.'
+    assert cmd_mgr.get_command_hashmap_length() == len(file_names), \
+        f'Must have {len(file_names)} commands.'
 
     for file_name in file_names:
         file_name_only = os.path.splitext(file_name)[0]
-        assert file_name_only in command_hashmap, f'Must include {file_name}.'
+        command = cmd_mgr.get_command(file_name_only)
 
-        command = command_hashmap[file_name_only]
+        assert command is not None, f'Must include {file_name}.'
+
+        assert 'directory' in command, 'Must have directory.'
+        assert 'file' in command, 'Must have file.'
+        assert 'command' in command, 'Must have command.'
+        assert 'output' in command, 'Must have output.'
+
+
+def test_command_hashmap_using_full_paths(compile_commands_json, full_paths):
+    """Testing command hashmap using full paths."""
+    cmd_mgr = cm.CommandManager.create_from_json(compile_commands_json)
+    assert cmd_mgr.get_command_hashmap_length() == len(full_paths), \
+        f'Must have {len(full_paths)} commands.'
+
+    for full_path in full_paths:
+        file_name_only = os.path.splitext(full_path)[0]
+        command = cmd_mgr.get_command(file_name_only)
+
+        assert command is not None, f'Must include {full_path}.'
+
         assert 'directory' in command, 'Must have directory.'
         assert 'file' in command, 'Must have file.'
         assert 'command' in command, 'Must have command.'
@@ -70,16 +101,16 @@ def test_export_to_pickle(compile_commands_json, pkl_file_name):
     """Export data to pickle."""
     cmd_mgr = cm.CommandManager.create_from_json(compile_commands_json)
     error_code = cmd_mgr.export_to_pkl(pkl_file_name)
-    assert error_code == 0, f'Error exporting to {pkl_file_name}'
+    assert error_code == ec.ErrorCodes.SUCCESS.value, \
+        f'Error exporting to {pkl_file_name}'
 
 
 def test_import_from_pickle(compile_commands_pkl, file_names):
     """Import from pickle."""
     cmd_mgr = cm.CommandManager.create_from_pkl(compile_commands_pkl)
-    command_hashmap = cmd_mgr.get_command_hashmap()
+    commands = cmd_mgr.get_commands()
 
-    for key in command_hashmap:
-        command = command_hashmap[key]
+    for command in commands:
         file_name = ''
         if 'file' in command:
             file_name = command['file']
