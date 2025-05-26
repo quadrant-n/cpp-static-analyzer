@@ -148,6 +148,11 @@ class CommandManager:
         completed = \
             CommandManager.execute_clang_tidy(entry, config)
 
+        if completed is None:
+            con.error('Failed to execute clang static analyzer for '
+                      f'{entry.get_input_path()}.')
+            return
+
         file_name, file_id = self._get_file_name_and_id(entry)
 
         if completed.returncode != 0:
@@ -172,6 +177,11 @@ class CommandManager:
         """Run clang static analyzer."""
         completed = \
             CommandManager.execute_clang_static_analyzer(entry, config)
+
+        if completed is None:
+            con.error('Failed to execute clang static analyzer for '
+                      f'{entry.get_input_path()}.')
+            return
 
         result = completed.stdout
         error = completed.stderr
@@ -228,6 +238,11 @@ class CommandManager:
         completed = \
             CommandManager.execute_clang_tidy(entry, config)
 
+        if completed is None:
+            con.error('Failed to execute clang static analyzer for '
+                      f'{entry.get_input_path()}.')
+            return ec.ErrorCodes.ERROR.value
+
         if completed.returncode != 0:
             con.error(f'clang-tidy returns {completed.returncode} '
                       f'when analyzing {entry.get_input_path()}')
@@ -235,10 +250,17 @@ class CommandManager:
         self._write_to_stdout(completed.stdout)
         self._write_to_stderr(completed.stderr)
 
+        return ec.ErrorCodes.SUCCESS.value
+
     def _analyze_with_clang(self, config: cfg.Config, entry: cdb.Entry):
         """Run clang static analyzer."""
         completed = \
             CommandManager.execute_clang_static_analyzer(entry, config)
+
+        if completed is None:
+            con.error('Failed to execute clang static analyzer for '
+                      f'{entry.get_input_path()}.')
+            return ec.ErrorCodes.ERROR.value
 
         if completed.returncode != 0:
             con.error(f'clang returns {completed.returncode} '
@@ -248,24 +270,29 @@ class CommandManager:
         self._write_to_stdout(completed.stdout)
         self._write_to_stdout(completed.stderr)
 
+        return ec.ErrorCodes.SUCCESS.value
+
     def analyze(self, config: cfg.Config, file_path: str):
         """Analyze single path."""
         file_name_without_ext = os.path.splitext(file_path)
 
         command = self.get_command(file_name_without_ext[0])
-        if command is not None:
-            entry = cdb.Entry(command)
+        if command is None:
+            con.error(f'No entry found for {file_path}.')
+            return ec.ErrorCodes.ERROR.value
 
-            if config.is_clang_tidy_enabled():
+        entry = cdb.Entry(command)
+        error_codes = 0
+
+        if config.is_clang_tidy_enabled():
+            error_codes = error_codes + \
                 self._analyze_with_clang_tidy(config, entry)
 
-            if config.is_clang_enabled():
+        if config.is_clang_enabled():
+            error_codes = error_codes + \
                 self._analyze_with_clang(config, entry)
 
-            return ec.ErrorCodes.SUCCESS.value
-
-        con.error(f'No entry found for {file_path}.')
-        return ec.ErrorCodes.ERROR.value
+        return error_codes
 
     def _create_directory(self, file_path: str) -> int:
         """Create directory."""
@@ -293,8 +320,16 @@ class CommandManager:
         return ec.ErrorCodes.SUCCESS.value
 
     @classmethod
+    def _convert_to_command_string(cls, exec_cmd):
+        """Convert to command string."""
+        cmd_str = ''
+        for cmd in exec_cmd:
+            cmd_str = cmd_str + ' ' + cmd
+        return cmd_str
+
+    @classmethod
     def execute_clang_tidy(cls, entry: cdb.Entry,
-                           config: cfg.Config) -> sproc.CompletedProcess:
+                           config: cfg.Config):
         """Execute clang-tidy."""
         # Compose command line for clang-tidy.
         exec_cmd = []
@@ -312,25 +347,29 @@ class CommandManager:
         arguments = entry.get_arguments()
         if len(arguments) > 0:
             exec_cmd.append('--')
+
             for arg in arguments:
                 exec_cmd.append(arg)
 
-        proc = sproc.run(exec_cmd,
-                         encoding='utf-8',
-                         shell=False,
-                         stdout=sproc.PIPE,
-                         stderr=sproc.PIPE,
-                         universal_newlines=True,
-                         text=True,
-                         check=False)
+        try:
+            proc = sproc.run(cls._convert_to_command_string(exec_cmd),
+                             encoding='utf-8',
+                             shell=True,
+                             stdout=sproc.PIPE,
+                             stderr=sproc.PIPE,
+                             universal_newlines=True,
+                             text=True,
+                             check=False)
+            return proc
+        except OSError as e:
+            con.error(f'Error executing {exec_cmd} with error {e}')
 
-        return proc
+        return None
 
     @classmethod
-    def execute_clang_static_analyzer(
-            cls,
-            entry: cdb.Entry,
-            config: cfg.Config) -> sproc.CompletedProcess:
+    def execute_clang_static_analyzer(cls,
+                                      entry: cdb.Entry,
+                                      config: cfg.Config):
         """Execute clang static analyzer."""
         # Compose command line for clang-tidy.
         exec_cmd = []
@@ -355,18 +394,26 @@ class CommandManager:
                 skip_next = False
                 continue
 
+            if arg == '-fsyntax-only':
+                continue
+
             if arg == '-o':
                 skip_next = True
             else:
                 exec_cmd.append(arg)
 
-        proc = sproc.run(exec_cmd,
-                         encoding='utf-8',
-                         shell=False,
-                         stdout=sproc.PIPE,
-                         stderr=sproc.PIPE,
-                         universal_newlines=True,
-                         text=True,
-                         check=False)
+        try:
+            proc = sproc.run(cls._convert_to_command_string(exec_cmd),
+                             encoding='utf-8',
+                             shell=True,
+                             stdout=sproc.PIPE,
+                             stderr=sproc.PIPE,
+                             universal_newlines=True,
+                             text=True,
+                             check=False)
+            return proc
 
-        return proc
+        except OSError as e:
+            con.error(f'Error executing {exec_cmd} with error {e}')
+
+        return None
