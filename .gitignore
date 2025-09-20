@@ -15,3 +15,4 @@ tests/sources/build
 tests/out
 tests/err
 tests/diag
+build/*
